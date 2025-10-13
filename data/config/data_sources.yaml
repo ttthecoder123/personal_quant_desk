@@ -1,0 +1,222 @@
+# Consolidated configuration for all data sources
+# Provides intelligent data source selection and fallback strategies
+
+alpha_vantage:
+  api_key: ${ALPHA_VANTAGE_API_KEY}
+  base_url: 'https://www.alphavantage.co/query'
+
+  # Free tier limitations
+  rate_limits:
+    calls_per_minute: 5
+    daily_quota: 25
+    burst_allowance: 2  # Allow small bursts within limits
+
+  # Caching configuration
+  cache_expiry_hours: 24
+  cache_location: 'cache/av_cache.db'
+
+  # Data quality preferences
+  preferred_for:
+    - 'forex'          # Alpha Vantage excels at FX data
+    - 'recent_data'    # Better quality for last 100 days
+
+  # Symbol mappings for Alpha Vantage API
+  symbol_mappings:
+    # Commodities - Alpha Vantage has limited commodity support
+    'CL=F':
+      function: 'WTI'
+      api_function: 'WTI'
+      interval: 'daily'
+      supported: true
+    'GC=F':
+      function: 'COMMODITY'
+      api_symbol: 'GOLD'
+      supported: false  # Limited support, use yfinance
+    'HG=F':
+      function: 'COMMODITY'
+      api_symbol: 'COPPER'
+      supported: false  # Limited support, use yfinance
+
+    # Forex pairs - Alpha Vantage specializes in FX
+    'AUDUSD=X':
+      function: 'FX_DAILY'
+      from_currency: 'AUD'
+      to_currency: 'USD'
+      supported: true
+      outputsize: 'compact'  # Last 100 days
+    'USDJPY=X':
+      function: 'FX_DAILY'
+      from_currency: 'USD'
+      to_currency: 'JPY'
+      supported: true
+      outputsize: 'compact'
+    'EURUSD=X':
+      function: 'FX_DAILY'
+      from_currency: 'EUR'
+      to_currency: 'USD'
+      supported: true
+      outputsize: 'compact'
+
+    # Indices - Use yfinance (Alpha Vantage doesn't support ETFs well)
+    'SPY':
+      supported: false  # Better from yfinance
+      reason: 'ETF not well supported by Alpha Vantage'
+    'QQQ':
+      supported: false
+      reason: 'ETF not well supported by Alpha Vantage'
+    '^AXJO':
+      supported: false
+      reason: 'International indices limited on Alpha Vantage'
+
+yfinance:
+  # Primary data source configuration
+  rate_limit_delay: 0.5  # seconds between requests
+  retry_attempts: 3
+  retry_delay: 2
+  backoff_multiplier: 2
+  session_cache: true
+
+  # Data preferences
+  preferred_for:
+    - 'indices'        # Excellent for ETFs and indices
+    - 'commodities'    # Good futures data
+    - 'historical'     # Reliable historical data
+    - 'volume_data'    # Provides volume information
+
+  # Timezone handling
+  default_timezone: 'America/New_York'
+  tz_mappings:
+    '^AXJO': 'Australia/Sydney'
+    'ASX': 'Australia/Sydney'
+
+  # Quality thresholds
+  min_data_points: 50
+  max_missing_pct: 0.10
+
+# Hybrid data strategy configuration
+hybrid_strategy:
+  # Data source selection rules
+  selection_rules:
+    # Use Alpha Vantage for recent forex data (higher quality)
+    forex_recent:
+      condition: "asset_class == 'forex' and days_requested <= 100"
+      primary_source: 'alpha_vantage'
+      fallback_source: 'yfinance'
+
+    # Use yfinance for indices and ETFs
+    indices_all:
+      condition: "asset_class == 'equity_etf' or asset_class == 'equity_index'"
+      primary_source: 'yfinance'
+      fallback_source: null
+
+    # Use yfinance for commodities (better futures support)
+    commodities_all:
+      condition: "asset_class == 'commodities'"
+      primary_source: 'yfinance'
+      fallback_source: 'alpha_vantage'
+
+    # Historical data always from yfinance (more reliable)
+    historical_data:
+      condition: "days_requested > 100"
+      primary_source: 'yfinance'
+      fallback_source: null
+
+  # Data combination strategy
+  combination_strategy:
+    # Split point for combining historical + recent data
+    recent_data_cutoff_days: 100
+
+    # How to handle overlapping data
+    overlap_resolution: 'keep_most_recent'  # 'keep_most_recent', 'average', 'alpha_vantage_priority'
+
+    # Quality requirements for data acceptance
+    min_quality_score: 70
+    require_both_sources: false  # true = require both sources, false = accept single source
+
+# Data validation and quality settings
+quality_control:
+  # Composite quality scoring weights
+  quality_weights:
+    completeness: 0.30    # Data completeness (non-missing values)
+    consistency: 0.30     # OHLC relationships and logical consistency
+    timeliness: 0.20      # How recent the data is
+    accuracy: 0.20        # Statistical accuracy (outlier analysis)
+
+  # Quality thresholds
+  thresholds:
+    production_ready: 85   # Minimum score for production use
+    excellent: 95         # Excellent quality threshold
+    good: 85             # Good quality threshold
+    fair: 70             # Fair quality threshold
+    poor: 0              # Below fair is poor
+
+  # Corporate action detection
+  corporate_actions:
+    adjustment_threshold: 0.02  # 2% change in adj_factor triggers detection
+    split_threshold: 0.5       # Factor changes >50% likely splits
+    dividend_threshold: 0.10   # Factor changes <10% likely dividends
+
+  # Outlier detection parameters
+  outlier_detection:
+    method: 'iqr'           # 'iqr', 'zscore', 'isolation_forest'
+    iqr_multiplier: 3.0     # IQR method multiplier
+    zscore_threshold: 3.0   # Z-score method threshold
+    max_outlier_pct: 0.05   # Max 5% outliers allowed
+
+# Caching and performance settings
+performance:
+  # Cache settings
+  cache_settings:
+    enable_api_cache: true
+    cache_expiry_hours: 24
+    max_cache_size_mb: 500
+    cleanup_frequency: 'daily'
+
+  # Batch processing
+  batch_processing:
+    max_concurrent_downloads: 3  # Conservative for free APIs
+    batch_delay: 2.0            # Seconds between batches
+    memory_limit_mb: 1000       # Memory usage limit
+
+  # Error handling
+  error_handling:
+    max_retries: 3
+    retry_delay: 5.0
+    exponential_backoff: true
+    circuit_breaker: true       # Stop trying after repeated failures
+
+# Monitoring and alerting
+monitoring:
+  # API usage tracking
+  api_monitoring:
+    track_usage: true
+    daily_usage_alert: 20      # Alert when approaching daily quota
+    rate_limit_buffer: 1       # Keep 1 call buffer for rate limits
+
+  # Quality monitoring
+  quality_monitoring:
+    track_quality_trends: true
+    quality_degradation_alert: 10  # Alert if quality drops by 10 points
+    minimum_acceptable_quality: 60
+
+  # Performance monitoring
+  performance_monitoring:
+    track_download_times: true
+    slow_download_threshold: 30  # seconds
+    track_cache_hit_rate: true
+
+# Development and testing settings
+development:
+  # Mock data for testing
+  mock_mode: false
+  mock_data_path: 'tests/fixtures/mock_data'
+
+  # Debug settings
+  debug_api_calls: false
+  log_api_responses: false
+
+  # Testing overrides
+  test_overrides:
+    force_cache_miss: false
+    simulate_rate_limits: false
+    mock_corporate_actions: false

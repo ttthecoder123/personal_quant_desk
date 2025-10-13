@@ -1,0 +1,219 @@
+# Instrument Configuration for Data Ingestion System
+# Following McKinney's best practices for hierarchical data organization
+
+instruments:
+  commodities:
+    CL_F:
+      symbol: "CL=F"
+      name: "WTI Crude Oil Futures"
+      asset_class: "commodities"
+      exchange: "NYMEX"
+      currency: "USD"
+      timezone: "America/New_York"
+      contract_type: "futures"
+      tick_size: 0.01
+      multiplier: 1000
+      trading_hours:
+        start: "18:00"
+        end: "17:00"
+        timezone: "America/New_York"
+      data_quality:
+        min_volume: 1000
+        max_daily_return: 0.15  # 15% max daily move
+        outlier_threshold: 3.0  # IQR multiplier
+
+    GC_F:
+      symbol: "GC=F"
+      name: "Gold Futures"
+      asset_class: "commodities"
+      exchange: "COMEX"
+      currency: "USD"
+      timezone: "America/New_York"
+      contract_type: "futures"
+      tick_size: 0.10
+      multiplier: 100
+      trading_hours:
+        start: "18:00"
+        end: "17:00"
+        timezone: "America/New_York"
+      data_quality:
+        min_volume: 500
+        max_daily_return: 0.10
+        outlier_threshold: 3.0
+
+    HG_F:
+      symbol: "HG=F"
+      name: "Copper Futures"
+      asset_class: "commodities"
+      exchange: "COMEX"
+      currency: "USD"
+      timezone: "America/New_York"
+      contract_type: "futures"
+      tick_size: 0.0005
+      multiplier: 25000
+      trading_hours:
+        start: "18:00"
+        end: "17:00"
+        timezone: "America/New_York"
+      data_quality:
+        min_volume: 200
+        max_daily_return: 0.12
+        outlier_threshold: 3.0
+
+  indices:
+    SPY:
+      symbol: "SPY"
+      name: "SPDR S&P 500 ETF Trust"
+      asset_class: "equity_etf"
+      exchange: "NYSE_ARCA"
+      currency: "USD"
+      timezone: "America/New_York"
+      contract_type: "etf"
+      tick_size: 0.01
+      multiplier: 1
+      trading_hours:
+        start: "09:30"
+        end: "16:00"
+        timezone: "America/New_York"
+      data_quality:
+        min_volume: 10000
+        max_daily_return: 0.08
+        outlier_threshold: 3.0
+
+    QQQ:
+      symbol: "QQQ"
+      name: "Invesco QQQ Trust Series 1"
+      asset_class: "equity_etf"
+      exchange: "NASDAQ"
+      currency: "USD"
+      timezone: "America/New_York"
+      contract_type: "etf"
+      tick_size: 0.01
+      multiplier: 1
+      trading_hours:
+        start: "09:30"
+        end: "16:00"
+        timezone: "America/New_York"
+      data_quality:
+        min_volume: 5000
+        max_daily_return: 0.10
+        outlier_threshold: 3.0
+
+    AXJO:
+      symbol: "^AXJO"
+      name: "S&P/ASX 200 Index"
+      asset_class: "equity_index"
+      exchange: "ASX"
+      currency: "AUD"
+      timezone: "Australia/Sydney"
+      contract_type: "index"
+      tick_size: 0.10
+      multiplier: 1
+      trading_hours:
+        start: "10:00"
+        end: "16:00"
+        timezone: "Australia/Sydney"
+      data_quality:
+        min_volume: 0  # Index doesn't have volume
+        max_daily_return: 0.06
+        outlier_threshold: 3.0
+
+  forex:
+    AUDUSD_X:
+      symbol: "AUDUSD=X"
+      name: "Australian Dollar/US Dollar"
+      asset_class: "forex"
+      exchange: "FX"
+      currency: "USD"
+      timezone: "UTC"
+      contract_type: "spot"
+      tick_size: 0.0001
+      multiplier: 100000
+      trading_hours:
+        start: "22:00"  # Sunday 22:00 UTC
+        end: "22:00"    # Friday 22:00 UTC
+        timezone: "UTC"
+      data_quality:
+        min_volume: 0  # FX doesn't have traditional volume
+        max_daily_return: 0.05
+        outlier_threshold: 3.0
+
+    USDJPY_X:
+      symbol: "USDJPY=X"
+      name: "US Dollar/Japanese Yen"
+      asset_class: "forex"
+      exchange: "FX"
+      currency: "JPY"
+      timezone: "UTC"
+      contract_type: "spot"
+      tick_size: 0.01
+      multiplier: 100000
+      trading_hours:
+        start: "22:00"
+        end: "22:00"
+        timezone: "UTC"
+      data_quality:
+        min_volume: 0
+        max_daily_return: 0.05
+        outlier_threshold: 3.0
+
+    EURUSD_X:
+      symbol: "EURUSD=X"
+      name: "Euro/US Dollar"
+      asset_class: "forex"
+      exchange: "FX"
+      currency: "USD"
+      timezone: "UTC"
+      contract_type: "spot"
+      tick_size: 0.0001
+      multiplier: 100000
+      trading_hours:
+        start: "22:00"
+        end: "22:00"
+        timezone: "UTC"
+      data_quality:
+        min_volume: 0
+        max_daily_return: 0.05
+        outlier_threshold: 3.0
+
+# Data Pipeline Configuration
+pipeline_config:
+  download:
+    batch_size: 5  # Number of symbols to download simultaneously
+    retry_attempts: 3
+    retry_delay: 2  # seconds
+    backoff_multiplier: 2
+    timeout: 30  # seconds
+    rate_limit_delay: 1  # seconds between API calls
+
+  validation:
+    max_missing_pct: 0.05  # 5% max missing data allowed
+    min_data_points: 100  # Minimum data points required
+    outlier_detection_method: "iqr"  # iqr, zscore, isolation_forest
+    interpolation_limit: 2  # Max consecutive missing values to interpolate
+
+  storage:
+    compression: "snappy"
+    engine: "pyarrow"
+    partition_by: "year"
+    index_levels: ["Date", "symbol"]
+
+  quality_monitoring:
+    daily_report: true
+    alert_threshold: 0.10  # Alert if data quality drops below 90%
+    retention_days: 30
+
+# Timezone mappings for proper handling
+timezone_mapping:
+  commodities: "America/New_York"
+  equity_us: "America/New_York"
+  equity_au: "Australia/Sydney"
+  equity_eu: "Europe/London"
+  forex: "UTC"
+
+# Data refresh schedule
+refresh_schedule:
+  historical_lookback_years: 5
+  daily_update_time: "18:30"  # UTC
+  weekend_full_refresh: true
+  holiday_calendar: "NYSE"
