@@ -6,6 +6,7 @@ Implements efficient batch downloading, retry logic, and timezone handling.
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import requests
 from typing import Dict, List, Optional, Tuple, Union, Any
 from datetime import datetime, timedelta
 import pytz
@@ -60,7 +61,7 @@ class MarketDataDownloader:
         yf.set_tz_cache_location(str(cache_dir))
 
         # Initialize session for connection pooling
-        self.session = yf._requests.Session()
+        self.session = requests.Session()
 
         # Performance tracking
         self.download_stats = {
