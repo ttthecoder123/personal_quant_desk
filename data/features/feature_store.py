@@ -90,7 +90,7 @@ class FeatureStore:
             Combined DataFrame with all requested features
         """
         if feature_sets is None:
-            feature_sets = ['base', 'technical', 'microstructure', 'regime']
+            feature_sets = self.list_available_features(symbol)
         
         features_list = []
         for feature_set in feature_sets:

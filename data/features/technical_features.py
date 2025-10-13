@@ -69,18 +69,36 @@ class TechnicalFeatures:
         """Fallback momentum indicators without TA-Lib."""
         features = pd.DataFrame(index=df.index)
         
-        for period in [14, 30]:
+        for period in [9, 14, 21, 30]:
             delta = df['Close'].diff()
             gain = delta.clip(lower=0).rolling(window=period).mean()
             loss = (-delta).clip(lower=0).rolling(window=period).mean()
-            rs = gain / loss
+            rs = gain / (loss + 1e-10)
             features[f'rsi_{period}'] = 100 - (100 / (1 + rs))
         
-        for short, long in [(10, 20), (20, 50), (50, 200)]:
+        for period in [10, 20, 50, 100, 200]:
+            features[f'sma_{period}'] = df['Close'].rolling(period).mean()
+            features[f'price_to_sma_{period}'] = df['Close'] / features[f'sma_{period}']
+        
+        for period in [10, 20, 50]:
+            ema = df['Close'].ewm(span=period, adjust=False).mean()
+            features[f'ema_{period}'] = ema
+            features[f'price_to_ema_{period}'] = df['Close'] / ema
+        
+        for short, long in [(10, 20), (10, 50), (20, 50), (50, 200)]:
             ma_short = df['Close'].rolling(short).mean()
             ma_long = df['Close'].rolling(long).mean()
             features[f'ma_cross_{short}_{long}'] = ma_short - ma_long
             features[f'ma_cross_pct_{short}_{long}'] = (ma_short - ma_long) / ma_long
+        
+        for period in [10, 20, 50]:
+            features[f'momentum_{period}'] = df['Close'] - df['Close'].shift(period)
+            features[f'roc_{period}'] = ((df['Close'] - df['Close'].shift(period)) / df['Close'].shift(period)) * 100
+        
+        for period in [14, 20]:
+            low_min = df['Low'].rolling(period).min()
+            high_max = df['High'].rolling(period).max()
+            features[f'stoch_{period}'] = 100 * (df['Close'] - low_min) / (high_max - low_min + 1e-10)
         
         return features
     

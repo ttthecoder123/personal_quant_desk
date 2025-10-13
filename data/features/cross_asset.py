@@ -23,12 +23,12 @@ class CrossAssetFeatures:
         self.asset_data = asset_data
         self.feature_names = []
     
-    def compute_correlations(self, window: int = 60) -> Dict[str, pd.DataFrame]:
+    def compute_correlations(self, windows: List[int] = [20, 60, 120]) -> Dict[str, pd.DataFrame]:
         """
-        Rolling correlations between assets.
+        Rolling correlations between assets at multiple time horizons.
         
         Args:
-            window: Rolling window for correlation calculation
+            windows: List of rolling windows for correlation calculation
             
         Returns:
             Dictionary mapping symbols to correlation features
@@ -40,18 +40,20 @@ class CrossAssetFeatures:
         for symbol1 in returns:
             df_features = pd.DataFrame(index=returns[symbol1].index)
             
-            for symbol2 in returns:
-                if symbol1 != symbol2:
-                    correlation = returns[symbol1].rolling(window).corr(returns[symbol2])
-                    df_features[f'corr_{symbol2}_{window}d'] = correlation
-            
-            if 'SPY' in returns and symbol1 != 'SPY':
-                cov = returns[symbol1].rolling(window).cov(returns['SPY'])
-                var_spy = returns['SPY'].rolling(window).var()
-                df_features[f'beta_spy_{window}d'] = cov / var_spy
+            for window in windows:
+                for symbol2 in returns:
+                    if symbol1 != symbol2:
+                        correlation = returns[symbol1].rolling(window).corr(returns[symbol2])
+                        df_features[f'corr_{symbol2}_{window}d'] = correlation
+                
+                if 'SPY' in returns and symbol1 != 'SPY':
+                    cov = returns[symbol1].rolling(window).cov(returns['SPY'])
+                    var_spy = returns['SPY'].rolling(window).var()
+                    df_features[f'beta_spy_{window}d'] = cov / var_spy
             
             features[symbol1] = df_features
-            logger.debug("Computed {} correlation features for {}", df_features.shape[1], symbol1)
+            logger.debug("Computed {} correlation features for {} across {} windows", 
+                        df_features.shape[1], symbol1, len(windows))
         
         return features
     
@@ -92,19 +94,20 @@ class CrossAssetFeatures:
         
         return features
     
-    def compute_all(self, window: int = 60) -> Dict[str, pd.DataFrame]:
+    def compute_all(self, windows: List[int] = [20, 60, 120]) -> Dict[str, pd.DataFrame]:
         """
-        Compute all cross-asset features.
+        Compute all cross-asset features at multiple time horizons.
         
         Args:
-            window: Rolling window for calculations
+            windows: List of rolling windows for calculations
             
         Returns:
             Dictionary mapping symbols to all cross-asset features
         """
-        logger.info("Computing all cross-asset features for {} symbols", len(self.asset_data))
+        logger.info("Computing all cross-asset features for {} symbols across {} windows", 
+                   len(self.asset_data), len(windows))
         
-        correlations = self.compute_correlations(window)
+        correlations = self.compute_correlations(windows)
         spreads = self.compute_spread_features()
         
         all_features = {}

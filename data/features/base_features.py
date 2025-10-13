@@ -31,10 +31,24 @@ class BaseFeatures:
         """
         features = pd.DataFrame(index=df.index)
         
-        for period in [1, 5, 20, 60, 120]:
+        for period in [1, 2, 3, 5, 10, 20, 30, 60, 90, 120, 180, 252]:
             features[f'return_{period}d'] = df['Close'].pct_change(period)
-            
+        
         features['log_return_1d'] = np.log(df['Close'] / df['Close'].shift(1))
+        features['log_return_5d'] = np.log(df['Close'] / df['Close'].shift(5))
+        
+        for lag in [1, 2, 3, 5]:
+            features[f'return_lag_{lag}'] = features['return_1d'].shift(lag)
+        
+        for period in [5, 20, 60]:
+            returns = df['Close'].pct_change()
+            features[f'return_mean_{period}d'] = returns.rolling(period).mean()
+            features[f'return_std_{period}d'] = returns.rolling(period).std()
+            features[f'return_skew_{period}d'] = returns.rolling(period).skew()
+            features[f'return_kurt_{period}d'] = returns.rolling(period).kurt()
+        
+        features['return_autocorr_1'] = df['Close'].pct_change().rolling(20).apply(lambda x: x.autocorr(lag=1))
+        features['return_autocorr_5'] = df['Close'].pct_change().rolling(20).apply(lambda x: x.autocorr(lag=5))
         
         for period in [1, 5, 20]:
             features[f'forward_return_{period}d'] = df['Close'].shift(-period).pct_change(period)
@@ -55,15 +69,25 @@ class BaseFeatures:
         features = pd.DataFrame(index=df.index)
         
         features['dollar_volume'] = df['Close'] * df['Volume']
+        features['log_volume'] = np.log(df['Volume'] + 1)
         
-        for period in [5, 20, 60]:
+        for period in [5, 10, 20, 40, 60]:
             features[f'volume_ma_{period}'] = df['Volume'].rolling(period).mean()
             features[f'volume_ratio_{period}'] = df['Volume'] / features[f'volume_ma_{period}']
+            features[f'volume_std_{period}'] = df['Volume'].rolling(period).std()
+            features[f'volume_std_ratio_{period}'] = features[f'volume_std_{period}'] / features[f'volume_ma_{period}']
         
-        features['vwap'] = (df['Close'] * df['Volume']).rolling(20).sum() / df['Volume'].rolling(20).sum()
-        features['price_to_vwap'] = df['Close'] / features['vwap']
+        for lag in [1, 2, 3, 5]:
+            features[f'volume_lag_{lag}'] = df['Volume'].shift(lag)
+        
+        for period in [5, 20]:
+            features[f'vwap_{period}'] = (df['Close'] * df['Volume']).rolling(period).sum() / df['Volume'].rolling(period).sum()
+            features[f'price_to_vwap_{period}'] = df['Close'] / features[f'vwap_{period}']
         
         features['amihud_illiquidity'] = (df['Close'].pct_change().abs() / features['dollar_volume']).rolling(20).mean()
+        
+        price_change = df['Close'].diff()
+        features['volume_price_corr_20'] = df['Volume'].rolling(20).corr(price_change.abs())
         
         logger.debug("Computed {} volume features", features.shape[1])
         return features
@@ -80,15 +104,19 @@ class BaseFeatures:
         """
         features = pd.DataFrame(index=df.index)
         
-        for period in [5, 20, 60]:
-            features[f'realized_vol_{period}d'] = df['Close'].pct_change().rolling(period).std() * np.sqrt(252)
+        returns = df['Close'].pct_change()
+        for period in [5, 10, 20, 30, 60, 90]:
+            features[f'realized_vol_{period}d'] = returns.rolling(period).std() * np.sqrt(252)
         
-        features['parkinson_vol'] = np.sqrt(252 * (np.log(df['High'] / df['Low']) ** 2 / (4 * np.log(2))).rolling(20).mean())
+        for period in [10, 20, 60]:
+            log_hl = (df['High'] / df['Low']).apply(np.log)
+            features[f'parkinson_vol_{period}'] = np.sqrt(252 * (log_hl ** 2 / (4 * np.log(2))).rolling(period).mean())
         
-        features['garman_klass_vol'] = np.sqrt(252 * (
-            0.5 * (np.log(df['High'] / df['Low']) ** 2) -
-            (2 * np.log(2) - 1) * (np.log(df['Close'] / df['Open']) ** 2)
-        ).rolling(20).mean())
+        for period in [10, 20, 60]:
+            features[f'garman_klass_vol_{period}'] = np.sqrt(252 * (
+                0.5 * ((df['High'] / df['Low']).apply(np.log) ** 2) -
+                (2 * np.log(2) - 1) * ((df['Close'] / df['Open']).apply(np.log) ** 2)
+            ).rolling(period).mean())
         
         high_low = df['High'] - df['Low']
         high_close = (df['High'] - df['Close'].shift()).abs()
@@ -98,8 +126,15 @@ class BaseFeatures:
             'hc': high_close,
             'lc': low_close
         }).max(axis=1)
-        features['atr_20'] = true_range.rolling(20).mean()
-        features['atr_ratio'] = true_range / features['atr_20']
+        for period in [10, 20, 40]:
+            features[f'atr_{period}'] = true_range.rolling(period).mean()
+            features[f'atr_ratio_{period}'] = true_range / features[f'atr_{period}']
+        
+        features['close_to_high'] = (df['High'] - df['Close']) / (df['High'] - df['Low'] + 1e-10)
+        features['close_to_low'] = (df['Close'] - df['Low']) / (df['High'] - df['Low'] + 1e-10)
+        
+        for period in [20, 60]:
+            features[f'vol_of_vol_{period}'] = features[f'realized_vol_{period}d'].rolling(20).std()
         
         logger.debug("Computed {} volatility features", features.shape[1])
         return features

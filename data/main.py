@@ -762,6 +762,25 @@ def compute_features(symbols, feature_sets, start_date, end_date, validate):
                 features = pipeline.process_symbol(symbol, start_date, end_date)
                 if not features.empty:
                     results[symbol] = features
+            
+            print("\nComputing cross-asset features...")
+            from features.cross_asset import CrossAssetFeatures
+            try:
+                asset_data = {
+                    s: pipeline.storage.load_timeseries(s, start_date, end_date) 
+                    for s in symbol_list
+                }
+                asset_data = {k: v for k, v in asset_data.items() if not v.empty}
+                
+                if asset_data:
+                    cross_asset = CrossAssetFeatures(asset_data)
+                    cross_features = cross_asset.compute_all()
+                    
+                    for symbol, features in cross_features.items():
+                        pipeline.feature_store.save_features(features, symbol, 'cross_asset')
+                        print(f"  Saved {features.shape[1]} cross-asset features for {symbol}")
+            except Exception as e:
+                print(f"  Warning: Failed to compute cross-asset features: {str(e)}")
         
         print("\n" + "-"*60)
         print("Feature Generation Summary:")
