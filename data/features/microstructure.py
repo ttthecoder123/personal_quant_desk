@@ -58,14 +58,14 @@ class MicrostructureFeatures:
                 window_returns = returns.iloc[i-period:i].abs()
                 window_volume = signed_volume.iloc[i-period:i]
                 
-                vol_var = window_volume.var()
-                if pd.notna(vol_var) and vol_var > 0:
+                try:
+                    vol_var = window_volume.var()
                     cov_val = window_returns.cov(window_volume)
-                    if pd.notna(cov_val):
+                    if vol_var > 0 and not pd.isna(vol_var) and not pd.isna(cov_val):
                         lambda_val = float(cov_val) / float(vol_var)
                     else:
                         lambda_val = np.nan
-                else:
+                except Exception:
                     lambda_val = np.nan
                 lambda_values.append(lambda_val)
             
