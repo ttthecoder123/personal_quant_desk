@@ -1,0 +1,54 @@
+
+symbols:
+  - CL=F      # WTI Oil
+  - GC=F      # Gold
+  - HG=F      # Copper
+  - SPY       # S&P 500
+  - QQQ       # NASDAQ
+  - ^AXJO     # ASX 200
+  - AUDUSD=X  # Australian Dollar
+  - USDJPY=X  # Japanese Yen
+  - EURUSD=X  # Euro
+
+feature_sets:
+  base:
+    returns: [1, 5, 20, 60, 120]
+    volume_windows: [5, 20, 60]
+    volatility_windows: [5, 20, 60]
+  
+  technical:
+    rsi_periods: [14, 30]
+    ma_pairs: [[10, 20], [20, 50], [50, 200]]
+    bb_period: 20
+  
+  microstructure:
+    spread_windows: [20, 60]
+    kyle_lambda_windows: [20, 60]
+  
+  regime:
+    vol_lookback: 252
+    trend_periods: [20, 60, 120]
+    cusum_window: 60
+  
+  cross_asset:
+    correlation_windows: [20, 60, 120]
+    pairs:
+      - [GC=F, HG=F]      # Gold-Copper
+      - [CL=F, GC=F]      # Oil-Gold
+      - [SPY, QQQ]        # Large cap vs Tech
+      - [AUDUSD=X, GC=F]  # AUD-Gold correlation
+
+quality_checks:
+  max_missing_pct: 0.05
+  min_observations: 252
+  outlier_threshold: 5
+
+storage:
+  format: parquet
+  compression: snappy
+  versioning: true
+  base_path: data/features/computed/
+
+reporting:
+  generate_summary: true
+  output_path: data/features/reports/

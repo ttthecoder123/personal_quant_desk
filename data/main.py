@@ -734,6 +734,66 @@ def stats():
     print(f"Last Run: {stats['last_run']}")
 
 
+@cli.command()
+@click.option('--symbols', default='all', help='Comma-separated symbols or "all"')
+@click.option('--feature-sets', default='all', help='Feature sets to compute (all/base/technical/microstructure/regime/cross_asset)')
+@click.option('--start-date', help='Start date (YYYY-MM-DD)')
+@click.option('--end-date', help='End date (YYYY-MM-DD)')
+@click.option('--validate', is_flag=True, help='Validate features after computation')
+def compute_features(symbols, feature_sets, start_date, end_date, validate):
+    """Compute features for specified symbols."""
+    from features.feature_pipeline import FeaturePipeline
+    
+    print("\n" + "="*60)
+    print("Feature Engineering Pipeline")
+    print("="*60)
+    
+    pipeline = FeaturePipeline()
+    
+    try:
+        if symbols == 'all':
+            print("\nComputing features for all configured symbols...")
+            results = pipeline.process_all_symbols(start_date, end_date)
+        else:
+            symbol_list = [s.strip() for s in symbols.split(',')]
+            print(f"\nComputing features for: {', '.join(symbol_list)}")
+            results = {}
+            for symbol in symbol_list:
+                features = pipeline.process_symbol(symbol, start_date, end_date)
+                if not features.empty:
+                    results[symbol] = features
+        
+        print("\n" + "-"*60)
+        print("Feature Generation Summary:")
+        print("-"*60)
+        for symbol, features in results.items():
+            print(f"{symbol:12} {features.shape[1]:4d} features, {features.shape[0]:6d} observations")
+        
+        print(f"\nTotal: {len(results)} symbols processed")
+        
+        if validate:
+            print("\n" + "-"*60)
+            print("Feature Validation:")
+            print("-"*60)
+            for symbol in results.keys():
+                validation = pipeline.validate_features(symbol)
+                status = "✓ PASS" if validation['valid'] else "✗ FAIL"
+                print(f"{symbol:12} {status}")
+                if not validation['valid'] and 'features_exceeding_missing_threshold' in validation:
+                    print(f"  Warning: {len(validation['features_exceeding_missing_threshold'])} features exceed missing threshold")
+        
+        report_path = pipeline.generate_feature_report()
+        print(f"\nFeature report generated: {report_path}")
+        
+        print("\n" + "="*60)
+        print("Feature engineering complete!")
+        print("="*60)
+        
+    except Exception as e:
+        print(f"\nError during feature computation: {str(e)}")
+        raise
+
+
 if __name__ == "__main__":
     # Configure logging
     logger.add(
