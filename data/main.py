@@ -53,7 +53,7 @@ class DataPipeline:
     - Complete data lineage tracking
     """
 
-    def __init__(self, config_path: str = "config/instruments.yaml", use_hybrid: bool = True):
+    def __init__(self, config_path: str = "config/config.yaml", use_hybrid: bool = True):
         """Initialize data pipeline with configuration."""
         self.config_path = Path(config_path)
         self.config = self._load_config()
