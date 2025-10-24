@@ -18,6 +18,30 @@ import hashlib
 from enum import Enum
 
 
+def _convert_numpy_types(obj):
+    """Convert numpy/pandas types to native Python types for JSON serialization."""
+    from dataclasses import is_dataclass, asdict as dataclass_asdict
+
+    if isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    elif is_dataclass(obj) and not isinstance(obj, type):
+        return _convert_numpy_types(dataclass_asdict(obj))
+    elif isinstance(obj, dict):
+        return {key: _convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_convert_numpy_types(item) for item in obj]
+    else:
+        return obj
+
+
 class DataStatus(Enum):
     """Data status enumeration."""
     ACTIVE = "active"
@@ -250,6 +274,11 @@ class DataCatalog:
     ) -> DatasetEntry:
         """Create DatasetEntry from metadata."""
         now = datetime.now(pytz.UTC)
+
+        # Convert metadata and quality_metrics to native Python types
+        metadata = _convert_numpy_types(metadata)
+        if quality_metrics:
+            quality_metrics = _convert_numpy_types(quality_metrics)
 
         # Extract quality information
         quality_score = quality_metrics.get('quality_score', 0.0) if quality_metrics else 0.0

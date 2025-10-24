@@ -114,8 +114,8 @@ class DataManager:
                     continue
 
                 # Fetch from Yahoo Finance
-                symbol = info['symbol']
-                ticker = yf.Ticker(f"{symbol}=F")  # Futures symbol
+                symbol = info['symbol']  # Symbol already includes =F suffix
+                ticker = yf.Ticker(symbol)
                 data = ticker.history(period="1d", interval="1m")
 
                 if not data.empty:
@@ -168,8 +168,8 @@ class DataManager:
                     continue
 
                 # Fetch from Yahoo Finance (forex symbols)
-                symbol = info['symbol'].replace('/', '')
-                ticker = yf.Ticker(f"{symbol}=X")
+                symbol = info['symbol']  # Symbol already includes =X suffix
+                ticker = yf.Ticker(symbol)
                 data = ticker.history(period="1d", interval="1m")
 
                 if not data.empty:

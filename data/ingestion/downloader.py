@@ -6,6 +6,7 @@ Implements efficient batch downloading, retry logic, and timezone handling.
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import requests
 from typing import Dict, List, Optional, Tuple, Union, Any
 from datetime import datetime, timedelta
 import pytz
@@ -35,6 +36,9 @@ class DownloadResult:
     rows_downloaded: int
     start_date: Optional[str]
     end_date: Optional[str]
+    source: Optional[str] = None
+    processing_time: float = 0.0
+    metadata: Optional[Dict] = None
 
 
 class MarketDataDownloader:
@@ -60,7 +64,7 @@ class MarketDataDownloader:
         yf.set_tz_cache_location(str(cache_dir))
 
         # Initialize session for connection pooling
-        self.session = yf._requests.Session()
+        self.session = requests.Session()
 
         # Performance tracking
         self.download_stats = {
@@ -110,8 +114,8 @@ class MarketDataDownloader:
         try:
             logger.info("Downloading {} from {} to {}", symbol, start_date, end_date)
 
-            # Create ticker object with session for connection pooling
-            ticker = yf.Ticker(symbol, session=self.session)
+            # Create ticker object - let yfinance handle session management
+            ticker = yf.Ticker(symbol)
 
             # Download data with specified parameters
             data = ticker.history(
@@ -119,8 +123,7 @@ class MarketDataDownloader:
                 end=end_date,
                 interval=interval,
                 auto_adjust=True,  # Adjust for splits and dividends
-                prepost=False,     # Regular trading hours only
-                threads=True       # Enable threading for faster downloads
+                prepost=False      # Regular trading hours only
             )
 
             if data.empty:
@@ -393,7 +396,6 @@ class MarketDataDownloader:
                 group_by='ticker',
                 auto_adjust=True,
                 prepost=False,
-                threads=True,
                 progress=False  # Disable progress bar for cleaner logs
             )
 
@@ -727,7 +729,7 @@ class HybridDataManager:
                 # Validate and get quality metrics
                 if self.validator:
                     df_clean, quality_metrics = self.validator.validate_ohlcv(df, symbol)
-                    metadata['quality_metrics'] = quality_metrics
+                    metadata['quality_metrics'] = quality_metrics.to_dict()
                     return df_clean, metadata
                 else:
                     return df, metadata
@@ -753,7 +755,7 @@ class HybridDataManager:
             # Validate and get quality metrics
             if self.validator:
                 df_clean, quality_metrics = self.validator.validate_ohlcv(result.data, symbol)
-                metadata['quality_metrics'] = quality_metrics
+                metadata['quality_metrics'] = quality_metrics.to_dict()
                 return df_clean, metadata
             else:
                 return result.data, metadata
@@ -833,7 +835,7 @@ class HybridDataManager:
             # Validate combined data
             if self.validator:
                 df_clean, quality_metrics = self.validator.validate_ohlcv(combined_df, symbol)
-                metadata['quality_metrics'] = quality_metrics
+                metadata['quality_metrics'] = quality_metrics.to_dict()
                 logger.success("Hybrid download successful for {} ({} rows from {})",
                              symbol, len(df_clean), sources_used)
                 return df_clean, metadata

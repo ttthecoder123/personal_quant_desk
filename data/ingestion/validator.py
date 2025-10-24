@@ -28,6 +28,17 @@ class CorporateAction:
     price_impact: float
     volume_impact: Optional[float] = None
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to JSON-serializable dictionary."""
+        return {
+            'date': self.date.isoformat() if isinstance(self.date, datetime) else str(self.date),
+            'action_type': self.action_type,
+            'factor': self.factor,
+            'confidence': self.confidence,
+            'price_impact': self.price_impact,
+            'volume_impact': self.volume_impact
+        }
+
 
 @dataclass
 class QualityMetrics:
@@ -46,6 +57,26 @@ class QualityMetrics:
     issues_found: List[str]
     recommendations: List[str]
     corporate_actions: List[CorporateAction]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to JSON-serializable dictionary."""
+        return {
+            'symbol': self.symbol,
+            'total_rows': self.total_rows,
+            'missing_pct': self.missing_pct,
+            'outlier_count': sum(self.outlier_count.values()) if self.outlier_count else 0,  # Sum total outliers
+            'suspicious_jumps': self.suspicious_jumps,
+            'data_completeness': self.data_completeness,
+            'completeness_pct': self.data_completeness,  # Alias for catalog compatibility
+            'price_consistency_score': self.price_consistency_score,
+            'volume_quality_score': self.volume_quality_score,
+            'timezone_issues': self.timezone_issues,
+            'quality_score': self.quality_score,
+            'validation_timestamp': self.validation_timestamp.isoformat() if isinstance(self.validation_timestamp, datetime) else str(self.validation_timestamp),
+            'issues_found': self.issues_found,
+            'recommendations': self.recommendations,
+            'corporate_actions': [ca.to_dict() for ca in self.corporate_actions]
+        }
 
 
 class DataValidator:
@@ -667,7 +698,7 @@ class DataValidator:
                 'max_quality_score': np.max(quality_scores),
                 'instruments_below_threshold': sum(1 for s in quality_scores if s < 0.8)
             },
-            'detailed_metrics': [asdict(m) for m in metrics_list],
+            'detailed_metrics': [m.to_dict() for m in metrics_list],
             'recommendations': {
                 'high_priority': [],
                 'medium_priority': [],
