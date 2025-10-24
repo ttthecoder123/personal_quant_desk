@@ -1,0 +1,81 @@
+# Model configuration for Personal Quant Desk
+# Based on López de Prado's framework
+
+# Labeling configuration
+labeling:
+  cusum_threshold: 0.02  # 2% threshold for event detection
+  volatility_multiplier: 2.0  # Target as multiple of daily volatility
+  max_holding_days: 10  # Maximum holding period
+  barrier_ratios: [1.5, 1.0]  # [profit_take, stop_loss] multipliers
+  volatility_span: 100  # Span for volatility calculation
+
+# Training configuration
+training:
+  test_size: 0.2  # Fraction of data for testing
+  cv_splits: 5  # Number of cross-validation splits
+  purge_gap: 10  # Days to purge in cross-validation
+
+  # Random Forest parameters
+  random_forest:
+    n_estimators: 100
+    max_depth: 5
+    min_samples_split: 50
+    min_samples_leaf: 25
+    max_features: 'sqrt'
+    random_state: 42
+
+  # LightGBM parameters
+  lightgbm:
+    n_estimators: 100
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    min_child_samples: 20
+    random_state: 42
+
+# Meta-labeling configuration
+meta_labeling:
+  use_meta: true  # Whether to use meta-labeling
+  probability_calibration: 'isotonic'  # 'isotonic' or 'sigmoid'
+  min_bet_size: 0.3  # Minimum bet size threshold
+
+# Sample weighting
+sample_weighting:
+  use_uniqueness: true  # Weight by sample uniqueness
+  use_return: true  # Weight by return magnitude
+  use_time_decay: false  # Apply time decay (usually not needed)
+  decay_factor: 0.95  # Decay factor if using time decay
+
+# Feature importance
+feature_importance:
+  methods: ['mdi', 'mda', 'shap']  # Methods to use
+  top_n_features: 20  # Number of top features to report
+  shap_sample_size: 100  # Sample size for SHAP calculation
+
+# Signal generation
+signals:
+  use_ml: true  # Use ML signals (vs rule-based only)
+  use_ensemble: true  # Use ensemble of models
+  signal_threshold: 0.5  # Minimum signal strength threshold
+
+  # Base signal weights (for composite signal)
+  base_weights:
+    momentum: 0.3
+    mean_reversion: 0.25
+    volatility: 0.25
+    trend: 0.2
+
+# Output paths
+output:
+  save_models: true
+  model_path: 'models/saved/'
+  signal_path: 'models/signals/'
+  label_path: 'models/labels/'
+
+# Logging
+logging:
+  level: 'INFO'  # DEBUG, INFO, WARNING, ERROR
+  save_logs: true
+  log_path: 'logs/models/'
