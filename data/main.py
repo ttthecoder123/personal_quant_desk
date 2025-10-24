@@ -16,6 +16,11 @@ from loguru import logger
 import warnings
 from dataclasses import dataclass, asdict
 import time
+import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our modules
 from ingestion.downloader import MarketDataDownloader, HybridDataManager, DownloadResult
@@ -40,6 +45,30 @@ class PipelineResult:
     error_message: Optional[str]
 
 
+def _convert_numpy_types(obj):
+    """Convert numpy/pandas types to native Python types for JSON serialization."""
+    from dataclasses import is_dataclass, asdict
+
+    if isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    elif is_dataclass(obj) and not isinstance(obj, type):
+        return _convert_numpy_types(asdict(obj))
+    elif isinstance(obj, dict):
+        return {key: _convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_convert_numpy_types(item) for item in obj]
+    else:
+        return obj
+
+
 class DataPipeline:
     """
     Professional data pipeline implementing McKinney's best practices for data processing.
@@ -53,7 +82,7 @@ class DataPipeline:
     - Complete data lineage tracking
     """
 
-    def __init__(self, config_path: str = "config/instruments.yaml", use_hybrid: bool = True):
+    def __init__(self, config_path: str = "data/config/instruments.yaml", use_hybrid: bool = True):
         """Initialize data pipeline with configuration."""
         self.config_path = Path(config_path)
         self.config = self._load_config()
@@ -62,7 +91,10 @@ class DataPipeline:
         # Initialize components
         if self.use_hybrid:
             # Use HybridDataManager for intelligent source selection
-            self.downloader = HybridDataManager(str(self.config_path))
+            # HybridDataManager uses its own config paths:
+            #   - config/data_sources.yaml for Alpha Vantage settings
+            #   - MarketDataDownloader internally uses data/config/instruments.yaml
+            self.downloader = HybridDataManager()
         else:
             # Fallback to basic MarketDataDownloader
             self.downloader = MarketDataDownloader(str(self.config_path))
@@ -246,6 +278,7 @@ class DataPipeline:
                             rows_downloaded=len(data),
                             start_date=start_date,
                             end_date=end_date,
+                            download_time=datetime.now(),
                             source='hybrid',
                             processing_time=metadata.get('processing_time', 0),
                             error_message=None,
@@ -259,6 +292,7 @@ class DataPipeline:
                             rows_downloaded=0,
                             start_date=start_date,
                             end_date=end_date,
+                            download_time=datetime.now(),
                             source='hybrid',
                             processing_time=0,
                             error_message="No data returned",
@@ -272,6 +306,7 @@ class DataPipeline:
                         rows_downloaded=0,
                         start_date=start_date,
                         end_date=end_date,
+                        download_time=datetime.now(),
                         source='hybrid',
                         processing_time=0,
                         error_message=str(e),
@@ -322,7 +357,10 @@ class DataPipeline:
                 catalog_metadata = self._prepare_catalog_metadata(
                     symbol, storage_metadata, quality_metrics, download_result
                 )
-                catalog_id = self.catalog.register_dataset(symbol, catalog_metadata, asdict(quality_metrics))
+                # Convert ALL metadata to native Python types before catalog registration
+                catalog_metadata = _convert_numpy_types(catalog_metadata)
+                quality_metrics_dict = _convert_numpy_types(quality_metrics.to_dict())
+                catalog_id = self.catalog.register_dataset(symbol, catalog_metadata, quality_metrics_dict)
 
                 # Log access
                 self.catalog.log_access(symbol, "write", f"pipeline_{datetime.now().strftime('%Y%m%d')}")
@@ -400,7 +438,7 @@ class DataPipeline:
         if hasattr(quality_metrics, 'corporate_actions') and quality_metrics.corporate_actions:
             processing_steps.append('corporate_action_detection')
 
-        return {
+        metadata = {
             'asset_class': instrument_config.get('asset_class', 'unknown'),
             'exchange': instrument_config.get('exchange', 'unknown'),
             'currency': instrument_config.get('currency', 'USD'),
@@ -422,9 +460,12 @@ class DataPipeline:
             'contact_info': 'data_pipeline',
             'checksum': '',  # Could calculate MD5 hash
             'schema_version': '1.0',
-            'hybrid_metadata': download_result.metadata if hasattr(download_result, 'metadata') else {},
+            'hybrid_metadata': json.dumps(_convert_numpy_types(download_result.metadata)) if hasattr(download_result, 'metadata') and download_result.metadata else json.dumps({}),
             'corporate_actions_detected': len(quality_metrics.corporate_actions) if hasattr(quality_metrics, 'corporate_actions') else 0
         }
+
+        # Convert numpy/pandas types to native Python types for JSON serialization
+        return _convert_numpy_types(metadata)
 
     def _get_instrument_config(self, symbol: str) -> Dict[str, Any]:
         """Get configuration for specific instrument."""
@@ -732,6 +773,85 @@ def stats():
     print(f"Average Quality: {stats['average_quality_score']:.1%}")
     print(f"Total Runtime: {stats['total_runtime']:.1f}s")
     print(f"Last Run: {stats['last_run']}")
+
+
+@cli.command()
+@click.option('--symbols', default='all', help='Comma-separated symbols or "all"')
+@click.option('--feature-sets', default='all', help='Feature sets to compute (all/base/technical/microstructure/regime/cross_asset)')
+@click.option('--start-date', help='Start date (YYYY-MM-DD)')
+@click.option('--end-date', help='End date (YYYY-MM-DD)')
+@click.option('--validate', is_flag=True, help='Validate features after computation')
+def compute_features(symbols, feature_sets, start_date, end_date, validate):
+    """Compute features for specified symbols."""
+    from features.feature_pipeline import FeaturePipeline
+    
+    print("\n" + "="*60)
+    print("Feature Engineering Pipeline")
+    print("="*60)
+    
+    pipeline = FeaturePipeline()
+    
+    try:
+        if symbols == 'all':
+            print("\nComputing features for all configured symbols...")
+            results = pipeline.process_all_symbols(start_date, end_date)
+        else:
+            symbol_list = [s.strip() for s in symbols.split(',')]
+            print(f"\nComputing features for: {', '.join(symbol_list)}")
+            results = {}
+            for symbol in symbol_list:
+                features = pipeline.process_symbol(symbol, start_date, end_date)
+                if not features.empty:
+                    results[symbol] = features
+            
+            print("\nComputing cross-asset features...")
+            from features.cross_asset import CrossAssetFeatures
+            try:
+                asset_data = {
+                    s: pipeline.storage.load_timeseries(s, start_date, end_date) 
+                    for s in symbol_list
+                }
+                asset_data = {k: v for k, v in asset_data.items() if not v.empty}
+                
+                if asset_data:
+                    cross_asset = CrossAssetFeatures(asset_data)
+                    cross_features = cross_asset.compute_all()
+                    
+                    for symbol, features in cross_features.items():
+                        pipeline.feature_store.save_features(features, symbol, 'cross_asset')
+                        print(f"  Saved {features.shape[1]} cross-asset features for {symbol}")
+            except Exception as e:
+                print(f"  Warning: Failed to compute cross-asset features: {str(e)}")
+        
+        print("\n" + "-"*60)
+        print("Feature Generation Summary:")
+        print("-"*60)
+        for symbol, features in results.items():
+            print(f"{symbol:12} {features.shape[1]:4d} features, {features.shape[0]:6d} observations")
+        
+        print(f"\nTotal: {len(results)} symbols processed")
+        
+        if validate:
+            print("\n" + "-"*60)
+            print("Feature Validation:")
+            print("-"*60)
+            for symbol in results.keys():
+                validation = pipeline.validate_features(symbol)
+                status = "✓ PASS" if validation['valid'] else "✗ FAIL"
+                print(f"{symbol:12} {status}")
+                if not validation['valid'] and 'features_exceeding_missing_threshold' in validation:
+                    print(f"  Warning: {len(validation['features_exceeding_missing_threshold'])} features exceed missing threshold")
+        
+        report_path = pipeline.generate_feature_report()
+        print(f"\nFeature report generated: {report_path}")
+        
+        print("\n" + "="*60)
+        print("Feature engineering complete!")
+        print("="*60)
+        
+    except Exception as e:
+        print(f"\nError during feature computation: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
