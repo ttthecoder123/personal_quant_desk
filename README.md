@@ -7,8 +7,8 @@ A comprehensive, semi-automated trading system for commodities, indices, and FX 
 - ✅ **Step 1: Project Structure** - COMPLETE
 - ✅ **Step 2: Data Ingestion** - COMPLETE (with Alpha Vantage enhancement)
 - ✅ **Step 3: Feature Engineering** - COMPLETE
-- ⏳ **Step 4: Signal Generation** - NEXT
-- ⏳ **Step 5: Strategy Development** - Pending
+- ✅ **Step 4: Signal Generation** - COMPLETE
+- ✅ **Step 5: Strategy Development** - COMPLETE
 - ⏳ **Step 7: Risk Management** - Pending
 - ⏳ **Step 10: Backtesting** - Pending
 - ⏳ **Step 12: Execution** - Pending
@@ -72,7 +72,23 @@ personal_quant_desk/              # Single consolidated root
 │   ├── logs/                   # Data pipeline logs
 │   └── main.py                 # CLI with hybrid mode options
 ├── models/                      # ML models (Step 4)
-├── strategies/                  # Trading strategies (Step 5)
+│   ├── signals/                 # Signal generation models
+│   ├── labeling/                # Triple-barrier labeling
+│   ├── training/                # Model training
+│   └── config/                  # Model configurations
+├── strategies/                  # Trading strategies (Step 5) - COMPLETE
+│   ├── base/                    # Core infrastructure
+│   │   ├── strategy_base.py     # Abstract base class
+│   │   ├── position_manager.py  # Position tracking
+│   │   └── performance_tracker.py  # Performance metrics
+│   ├── mean_reversion/          # Mean reversion strategies
+│   ├── momentum/                # Momentum strategies
+│   ├── volatility/              # Volatility strategies
+│   ├── hybrid/                  # Hybrid strategies
+│   ├── portfolio/               # Portfolio construction
+│   ├── execution/               # Execution layer
+│   ├── config/                  # Strategy configurations
+│   └── strategy_engine.py       # Main orchestration
 ├── risk/                        # Risk management (Step 7)
 ├── execution/                   # Order execution (Step 12)
 ├── backtesting/                 # Strategy backtesting (Step 10)
@@ -176,6 +192,158 @@ python main.py stats
 - **Split Detection**: >50% overnight price changes
 - **Dividend Detection**: <10% price adjustments on ex-dates
 - **Confidence Scoring**: 0.0-1.0 based on price patterns and volume
+
+## 📈 Signal Generation (Step 4 - COMPLETE)
+
+### ML-Based Signal Generation
+The system includes comprehensive machine learning models for trade signal generation:
+
+- **Triple-Barrier Labeling**: Advanced labeling method for supervised learning
+- **Meta-Labeling**: Bet sizing using ML confidence scores
+- **Random Forest & XGBoost**: Primary prediction models
+- **Feature Importance**: SHAP values for model interpretability
+- **Signal Confidence**: Probabilistic outputs for position sizing
+
+### Signal Pipeline
+```bash
+cd models
+
+# Generate signals for all symbols
+python main.py generate-signals --symbols "SPY,CL=F,GC=F"
+
+# Train new models
+python main.py train --model-type xgboost
+```
+
+## 🎯 Strategy Development (Step 5 - COMPLETE)
+
+### Comprehensive Strategy System
+Industrial-strength strategy development and portfolio construction implementing methodologies from Chan, Carver, and Jansen.
+
+### Strategy Categories
+
+#### Mean Reversion Strategies
+- **Pairs Trading**: Cointegration-based pairs with Johansen test, OLS hedge ratios
+- **Bollinger Reversion**: Dynamic Bollinger Bands with RSI divergence and volume confirmation
+- **Ornstein-Uhlenbeck**: OU process parameter estimation with mean reversion half-life
+- **Index Arbitrage**: Index vs constituent basket arbitrage
+
+#### Momentum Strategies
+- **Trend Following**: Carver's multi-timeframe EWMA with forecast scaling (-20 to +20)
+- **Breakout Momentum**: Donchian channel breakouts with volatility squeeze detection
+- **Cross-Sectional**: Relative momentum ranking across instruments
+- **Time Series Momentum**: Sign-based momentum (Moskowitz et al.)
+
+#### Volatility Strategies
+- **Volatility Targeting**: Carver's systematic volatility targeting (20% annual)
+- **Vol Arbitrage**: Implied vs realized volatility trading with Greeks
+- **Gamma Scalping**: Delta-neutral gamma trading with rehedging
+- **Dispersion Trading**: Index vs components volatility dispersion
+
+#### Hybrid Strategies
+- **ML-Enhanced**: Combines discretionary rules with ML predictions
+- **Regime Switching**: Market regime detection (HMM or volatility-based)
+- **Multi-Factor**: Combines momentum, volatility, value, quality factors
+- **Ensemble**: Dynamic strategy combination with online learning
+
+### Portfolio Construction (Carver Framework)
+
+- **Portfolio Optimizer**: Forecast combination with correlation adjustment
+- **Risk Parity**: Equal Risk Contribution (ERC) and Hierarchical Risk Parity (HRP)
+- **Kelly Sizing**: Optimal position sizing with confidence weighting
+- **Correlation Manager**: Rolling correlation with regime-dependent penalties
+- **Rebalancer**: Threshold-based with transaction cost optimization
+
+### Execution Layer
+
+- **Order Generator**: Signal-to-order conversion with aggregation and netting
+- **Execution Algorithms**: TWAP, VWAP, participation rate, adaptive execution
+- **Slippage Model**: Linear and square-root market impact models
+- **Cost Model**: Commission, fees, margin interest, currency conversion
+
+### Strategy Engine Commands
+
+```bash
+# Initialize strategy engine
+from strategies import StrategyEngine
+
+# Create engine with default configs
+engine = StrategyEngine(
+    strategy_config_path="strategies/config/strategy_config.yaml",
+    portfolio_config_path="strategies/config/portfolio_config.yaml",
+    initial_capital=100000.0
+)
+
+# Generate signals for instruments
+signals = engine.update_signals(
+    symbols=["SPY", "CL=F", "GC=F"],
+    market_data=market_data,
+    features=features,
+    ml_signals=ml_signals
+)
+
+# Calculate target positions
+positions = engine.calculate_positions()
+
+# Generate executable orders
+orders = engine.generate_orders()
+
+# Update performance metrics
+metrics = engine.update_performance()
+
+# Check risk limits
+within_limits, violations = engine.check_risk_limits()
+
+# Get summary
+print(engine.get_summary())
+```
+
+### Configuration
+
+**Strategy Configuration** (`strategies/config/strategy_config.yaml`):
+- Individual strategy parameters
+- Entry/exit thresholds
+- Risk limits per strategy
+- ML confidence thresholds
+- Performance targets
+
+**Portfolio Configuration** (`strategies/config/portfolio_config.yaml`):
+- Portfolio-level constraints (20% vol target, 2x max leverage)
+- Position limits (20% max per position, 2% max risk)
+- Diversification settings (IDM calculation, max correlation 0.85)
+- Rebalancing parameters (drift threshold, time interval)
+- Risk budgeting across strategy categories
+
+### Risk Management
+
+- **Volatility Targeting**: 20% annualized portfolio volatility
+- **Position Limits**: 20% max allocation per position, 2% max loss
+- **Drawdown Control**: 20% maximum drawdown limit
+- **Correlation Limits**: 85% maximum position correlation
+- **Leverage Constraints**: 2x maximum leverage with margin buffers
+
+### Performance Metrics
+
+**Strategy-Level**:
+- Sharpe ratio (target > 1.0)
+- Sortino ratio, Calmar ratio
+- Maximum drawdown, current drawdown
+- Win rate, profit factor
+- Kelly criterion calculation
+
+**Portfolio-Level**:
+- Portfolio Sharpe ratio
+- Effective number of bets
+- Risk contribution by strategy
+- Correlation to benchmarks
+- Drawdown duration
+
+### Integration Points
+
+- **Step 2 (Data)**: Real-time and historical data from ParquetStorage
+- **Step 3 (Features)**: 150+ engineered features for signal generation
+- **Step 4 (Models)**: ML signals with meta-labels and triple-barrier exits
+- **Future Steps**: Risk management (Step 7), Backtesting (Step 10), Execution (Step 12)
 
 ## 🎯 Feature Engineering (Step 3 - COMPLETE)
 

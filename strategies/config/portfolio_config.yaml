@@ -1,0 +1,226 @@
+# Portfolio Construction Configuration
+# Settings for Carver's portfolio construction framework
+
+# Portfolio-Level Parameters
+portfolio:
+  initial_capital: 100000.0  # $100k starting capital
+  target_volatility: 0.20  # 20% annualized
+  max_leverage: 2.0
+  max_gross_exposure: 1.5  # 150% of capital
+  max_net_exposure: 1.0  # 100% long or short
+  currency: USD
+
+# Position Limits
+position_limits:
+  max_position_size: 0.20  # 20% of portfolio per position
+  min_position_size: 0.01  # 1% minimum
+  max_positions: 20
+  max_positions_per_strategy: 10
+  max_sector_exposure: 0.40  # 40% per sector
+  max_asset_class_exposure: 0.60  # 60% per asset class
+
+# Diversification
+diversification:
+  calculate_idm: true  # Calculate Instrument Diversification Multiplier
+  min_instruments: 3
+  target_instruments: 9  # Our 9 target instruments
+  max_correlation: 0.85
+  correlation_window: 60  # Days
+  use_shrinkage: true  # Ledoit-Wolf shrinkage for correlation matrix
+
+# Forecast Combination (Carver)
+forecast:
+  min_forecast: -20.0
+  max_forecast: 20.0
+  forecast_scalar: 10.0
+  forecast_cap_factor: 1.0
+  use_correlation_adjustment: true
+  equal_strategy_weights: false  # If false, use performance-based weights
+
+# Portfolio Optimization
+optimization:
+  method: carver  # carver, markowitz, risk_parity, hrp
+  objective: sharpe  # sharpe, volatility, returns
+  constraints:
+    min_weight: -0.20  # Allow 20% short positions
+    max_weight: 0.20
+    sum_weights: 1.0  # Fully invested (can use leverage)
+
+  # Carver-specific
+  carver:
+    position_inertia: 0.10  # 10% threshold for rebalancing
+    forecast_combination_weights: equal  # equal or performance
+
+  # Markowitz-specific
+  markowitz:
+    risk_aversion: 1.0
+    use_shrinkage: true
+    min_history: 252  # Require 1 year of data
+
+  # Risk Parity-specific
+  risk_parity:
+    method: hrp  # erc or hrp
+    risk_budget: equal  # equal or custom
+    target_risk: 0.20
+
+# Kelly Criterion
+kelly:
+  enabled: true
+  max_kelly_fraction: 0.25  # 25% cap for safety
+  use_half_kelly: false
+  confidence_scaling: true  # Scale by ML confidence
+  drawdown_adjustment: true
+  max_drawdown_scalar: 0.20  # Reduce Kelly during drawdowns
+
+# Correlation Management
+correlation:
+  calculation_method: pearson  # pearson, spearman, kendall
+  rolling_window: 60  # Days
+  min_observations: 30
+  correlation_regimes:
+    normal: 0.60  # < 60% correlation
+    elevated: 0.80  # 60-80%
+    stress: 1.00  # > 80%
+  regime_penalties:
+    normal: 0.0
+    elevated: 0.10  # Reduce position size by 10%
+    stress: 0.25  # Reduce by 25%
+  clustering:
+    enabled: true
+    method: hierarchical  # hierarchical or kmeans
+    n_clusters: 3
+
+# Rebalancing
+rebalancing:
+  frequency: daily  # daily, weekly, monthly, threshold
+  threshold_method: both  # drift, time, both
+
+  # Drift-based
+  drift_threshold: 0.10  # Rebalance if position drifts >10%
+  absolute_drift: false  # If true, use absolute %; if false, use relative %
+
+  # Time-based
+  time_interval_days: 5
+
+  # Cost optimization
+  min_trade_size: 100.0  # Minimum $100 trade
+  transaction_cost_threshold: 0.001  # 10 bps
+  include_costs_in_decision: true
+
+  # Emergency rebalancing
+  emergency_triggers:
+    max_drawdown_breach: true
+    var_breach: true
+    correlation_spike: true
+    volatility_spike: true
+
+# Risk Budgeting
+risk_budgeting:
+  method: equal  # equal, volatility_weighted, sharpe_weighted
+  total_risk_budget: 0.20  # 20% portfolio volatility target
+  strategy_budgets:  # Custom risk budgets per strategy category
+    mean_reversion: 0.25  # 25% of total risk
+    momentum: 0.35  # 35%
+    volatility: 0.20  # 20%
+    hybrid: 0.20  # 20%
+  rebalance_frequency: weekly
+  min_risk_contribution: 0.05  # 5% minimum
+  max_risk_contribution: 0.40  # 40% maximum
+
+# Position Sizing
+position_sizing:
+  method: volatility_target  # fixed, volatility_target, risk_parity, kelly
+
+  # Volatility targeting
+  vol_target:
+    instrument_scalar: true  # Scale by instrument volatility
+    forecast_scalar: true  # Scale by forecast strength
+    vol_lookback: 36  # Days for volatility calculation
+
+  # Risk-based sizing
+  risk_based:
+    risk_per_trade: 0.02  # 2% of capital per trade
+    use_atr_stops: true
+    atr_period: 14
+    atr_multiplier: 2.0
+
+# Margin & Leverage
+margin:
+  initial_margin_ratio: 0.50  # 50% initial margin
+  maintenance_margin_ratio: 0.35  # 35% maintenance
+  margin_call_threshold: 0.40  # Margin call at 40%
+  max_margin_usage: 0.80  # Use max 80% of available margin
+  buffer: 0.20  # Keep 20% buffer
+
+# Asset Allocation
+asset_allocation:
+  # Target allocation by asset class
+  targets:
+    commodities: 0.33  # 33% (CL=F, GC=F, HG=F)
+    equities: 0.34  # 34% (SPY, QQQ, ^AXJO)
+    forex: 0.33  # 33% (AUDUSD, USDJPY, EURUSD)
+
+  # Rebalancing bands
+  rebalance_bands:
+    commodities: [0.25, 0.40]  # Min 25%, max 40%
+    equities: [0.25, 0.45]
+    forex: [0.25, 0.40]
+
+  # Dynamic adjustment
+  dynamic_allocation: true
+  adjustment_frequency: monthly
+  volatility_scaling: true
+
+# Performance Monitoring
+monitoring:
+  track_metrics:
+    - sharpe_ratio
+    - sortino_ratio
+    - max_drawdown
+    - volatility
+    - var_95
+    - correlation
+
+  alert_thresholds:
+    sharpe_below: 0.5
+    drawdown_above: 0.15  # 15%
+    volatility_above: 0.25  # 25%
+    correlation_above: 0.90
+
+  rolling_windows: [30, 60, 120, 252]  # Days for rolling metrics
+
+# Constraints
+constraints:
+  long_only: false  # Allow short positions
+  max_short_exposure: -0.50  # Max 50% short
+  max_long_exposure: 1.50  # Max 150% long
+
+  # Instrument-specific constraints
+  instrument_constraints:
+    "CL=F":  # Oil
+      max_weight: 0.15
+      max_leverage: 1.5
+    "GC=F":  # Gold
+      max_weight: 0.15
+      max_leverage: 2.0
+    "SPY":  # S&P 500
+      max_weight: 0.20
+      max_leverage: 2.0
+    "^AXJO":  # ASX
+      max_weight: 0.15
+      max_leverage: 1.5
+
+# State Management
+state:
+  save_frequency: daily  # Save state daily
+  save_path: strategies/state/portfolio_state.json
+  backup_frequency: weekly
+  backup_path: strategies/state/backups/
+  max_backups: 10
+
+# Integration
+integration:
+  use_step4_signals: true  # Integrate with Step 4 ML models
+  use_step3_features: true  # Use Step 3 engineered features
+  signal_confidence_threshold: 0.55  # Minimum ML confidence
+  feature_update_frequency: daily
