@@ -6,8 +6,8 @@ A comprehensive, semi-automated trading system for commodities, indices, and FX 
 
 - ✅ **Step 1: Project Structure** - COMPLETE
 - ✅ **Step 2: Data Ingestion** - COMPLETE (with Alpha Vantage enhancement)
-- ⏳ **Step 3: Feature Engineering** - NEXT
-- ⏳ **Step 4: Signal Generation** - Pending
+- ✅ **Step 3: Feature Engineering** - COMPLETE
+- ⏳ **Step 4: Signal Generation** - NEXT
 - ⏳ **Step 5: Strategy Development** - Pending
 - ⏳ **Step 7: Risk Management** - Pending
 - ⏳ **Step 10: Backtesting** - Pending
@@ -50,6 +50,19 @@ personal_quant_desk/              # Single consolidated root
 │   │   ├── storage.py          # Parquet storage with compression
 │   │   ├── catalog.py          # Data catalog with quality tracking
 │   │   └── __init__.py
+│   ├── features/                # Feature engineering (Step 3)
+│   │   ├── base_features.py    # Price/volume transformations
+│   │   ├── technical_features.py  # Technical indicators (RSI, MACD, etc.)
+│   │   ├── microstructure.py   # Market microstructure features
+│   │   ├── regime_features.py  # Regime detection
+│   │   ├── cross_asset.py      # Cross-asset correlations
+│   │   ├── commodity_specific.py  # Commodity features
+│   │   ├── feature_pipeline.py # Feature generation orchestration
+│   │   ├── feature_store.py    # Feature storage & versioning
+│   │   ├── config/
+│   │   │   └── feature_config.yaml  # Feature configuration
+│   │   ├── computed/           # Generated features (Parquet)
+│   │   └── reports/            # Feature quality reports
 │   ├── processed/               # Parquet files
 │   ├── cache/                   # API response cache (SQLite)
 │   ├── catalog/                 # Metadata storage
@@ -164,6 +177,60 @@ python main.py stats
 - **Dividend Detection**: <10% price adjustments on ex-dates
 - **Confidence Scoring**: 0.0-1.0 based on price patterns and volume
 
+## 🎯 Feature Engineering (Step 3 - COMPLETE)
+
+### Feature Categories
+The system generates **150+ features per symbol** across multiple categories:
+
+#### Base Features
+- **Returns**: Multiple horizons (1, 5, 20, 60, 120 periods)
+- **Volume**: Transformations and rolling statistics (5, 20, 60 periods)
+- **Volatility**: Multiple window sizes (5, 20, 60 periods)
+
+#### Technical Indicators
+- **Momentum**: RSI (14, 30), MACD, Stochastic, ADX
+- **Trend**: Moving average crosses (10/20, 20/50, 50/200)
+- **Directional**: Plus/Minus DI, trend strength
+
+#### Market Microstructure
+- **Kyle's Lambda**: Price impact (20, 60 window)
+- **Spread Analysis**: Bid-ask spread estimation
+- **Order Flow**: Volume-based microstructure metrics
+
+#### Regime Detection
+- **Volatility Regimes**: 252-day lookback
+- **Trend States**: Multiple periods (20, 60, 120)
+- **CUSUM**: Change point detection (60 window)
+
+#### Cross-Asset Features
+- **Correlations**: Rolling windows (20, 60, 120)
+- **Pairs**: Gold-Copper, Oil-Gold, SPY-QQQ, AUD-Gold
+
+#### Commodity-Specific
+- **Seasonality**: Time-based patterns
+- **Curve Analysis**: Commodity-specific features
+
+### Feature Pipeline Commands
+
+```bash
+cd data
+
+# Generate features for all symbols
+python main.py features --symbols "SPY,CL=F,GC=F"
+
+# Generate with custom configuration
+python main.py features --config features/config/feature_config.yaml
+
+# View feature statistics
+python main.py feature-stats
+```
+
+### Feature Storage
+- **Format**: Parquet with Snappy compression
+- **Versioning**: Automatic version control
+- **Location**: `data/features/computed/`
+- **Reports**: Quality metrics in `data/features/reports/`
+
 ## 🔌 API Configuration
 
 ### Alpha Vantage (Free Tier)
@@ -272,13 +339,12 @@ All operations are logged with structured logging:
 
 ## 🔮 Next Steps
 
-1. **Feature Engineering** (Step 3): Technical indicators, market microstructure
-2. **Signal Generation** (Step 4): ML models for trade signals
-3. **Strategy Development** (Step 5): Complete trading strategies
-4. **Risk Management** (Step 7): Position sizing and risk controls
-5. **Backtesting** (Step 10): Historical strategy performance
-6. **Execution** (Step 12): Broker integration and order management
-7. **Monitoring** (Step 13): Real-time system monitoring and alerts
+1. **Signal Generation** (Step 4): ML models for trade signals
+2. **Strategy Development** (Step 5): Complete trading strategies
+3. **Risk Management** (Step 7): Position sizing and risk controls
+4. **Backtesting** (Step 10): Historical strategy performance
+5. **Execution** (Step 12): Broker integration and order management
+6. **Monitoring** (Step 13): Real-time system monitoring and alerts
 
 ## 🤝 Contributing
 
