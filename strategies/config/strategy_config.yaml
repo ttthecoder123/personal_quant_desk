@@ -1,0 +1,189 @@
+# Strategy Configuration
+# Parameters for all trading strategies in the Personal Quant Desk
+
+# Global Strategy Settings
+global:
+  enabled: true
+  min_confidence: 0.55  # Minimum ML confidence for signal acceptance
+  max_position_risk: 0.02  # 2% max loss per position
+  max_positions: 20  # Maximum concurrent positions
+  rebalance_frequency: daily  # daily, weekly, monthly
+
+# Mean Reversion Strategies
+mean_reversion:
+  pairs_trading:
+    enabled: true
+    lookback_period: 252  # 1 year for cointegration test
+    entry_zscore: 2.0
+    exit_zscore: 0.5
+    min_half_life: 1  # Minimum half-life in days
+    max_half_life: 30  # Maximum half-life in days
+    min_cointegration_pvalue: 0.05
+    use_kalman_filter: false  # Use Kalman filter for hedge ratio (vs OLS)
+    kelly_fraction_cap: 0.25
+
+  bollinger_reversion:
+    enabled: true
+    bb_period: 20
+    bb_std: 2.0
+    rsi_period: 14
+    rsi_oversold: 30
+    rsi_overbought: 70
+    require_volume_confirmation: true
+    volume_threshold: 1.5  # Multiple of average volume
+    max_position_scaling: 1.5  # Max position size multiplier
+
+  ornstein_uhlenbeck:
+    enabled: true
+    lookback_period: 60
+    entry_zscore: 2.0
+    exit_zscore: 0.5
+    min_half_life: 1
+    max_half_life: 30
+    min_r_squared: 0.3  # Minimum R² for model fit
+    confidence_level: 0.95
+
+  index_arbitrage:
+    enabled: false  # Requires index constituents data
+    entry_spread_bps: 10  # Entry at 10 basis points
+    exit_spread_bps: 2
+    min_components: 5
+    transaction_cost_bps: 5
+    slippage_bps: 3
+
+# Momentum Strategies
+momentum:
+  trend_following:
+    enabled: true
+    timeframes: [20, 60, 120]  # Multiple timeframes (days)
+    forecast_scalar: 10.0
+    min_adx: 25.0  # Minimum ADX for trend strength
+    position_inertia: 0.10  # 10% threshold for position changes
+    atr_stop_multiplier: 2.0
+    atr_target_multiplier: 3.0
+
+  breakout_momentum:
+    enabled: true
+    entry_period: 55  # Donchian channel entry period
+    exit_period: 20  # Donchian channel exit period
+    require_volume_confirmation: true
+    volume_threshold: 1.5
+    require_volatility_squeeze: true
+    squeeze_threshold: 0.5  # BB width percentile
+    atr_stop_multiplier: 2.0
+    min_ml_confidence: 0.60
+
+  cross_sectional:
+    enabled: true
+    lookback_periods: [21, 63, 126, 252]  # 1m, 3m, 6m, 12m
+    period_weights: [0.20, 0.30, 0.30, 0.20]
+    selection_percentile: 0.25  # Top/bottom 25%
+    sector_neutral: false
+    rebalance_frequency: 21  # Days
+    max_turnover: 0.50  # 50% max turnover
+
+  time_series_momentum:
+    enabled: true
+    lookback_periods: [21, 63, 126, 252]  # 1m, 3m, 6m, 12m
+    skip_period: 21  # Skip most recent days (Moskowitz)
+    signal_combination: vote  # vote, average, unanimous
+    volatility_target: 0.15  # 15% target volatility
+    require_trend_persistence: true
+    persistence_threshold: 0.60  # 60% of days
+
+# Volatility Strategies
+volatility:
+  vol_targeting:
+    enabled: true
+    target_volatility: 0.20  # 20% annual
+    vol_lookback: 36  # EWMA span in days
+    use_garch: true
+    garch_fallback_to_ewma: true
+    risk_budget_per_position: 0.05  # 5% of portfolio
+    rebalance_threshold: 0.10  # Rebalance if leverage drifts 10%
+    max_leverage: 2.0
+
+  vol_arbitrage:
+    enabled: false  # Requires options data
+    min_vol_spread: 0.05  # 5% difference between implied/realized
+    exit_vol_spread: 0.02
+    delta_hedge_threshold: 0.10
+    use_parkinson_vol: true
+
+  gamma_scalping:
+    enabled: false  # Requires options and high-frequency data
+    min_gamma: 0.05
+    delta_hedge_threshold: 0.15
+    max_rehedges_per_day: 6
+    theta_tolerance: 0.02  # 2% daily decay
+
+  dispersion_trading:
+    enabled: false  # Requires index constituents
+    min_components: 10
+    correlation_high_threshold: 0.70
+    correlation_low_threshold: 0.40
+    rebalance_frequency: 5  # Days
+
+# Hybrid Strategies
+hybrid:
+  ml_enhanced:
+    enabled: true
+    ml_weight: 0.60  # 60% ML, 40% rules
+    rule_based_method: ma_crossover  # ma_crossover, momentum, mean_reversion
+    adapt_weights: true
+    adaptation_rate: 0.05
+    track_feature_importance: true
+
+  regime_switching:
+    enabled: true
+    detection_method: volatility  # volatility or hmm
+    vol_low_percentile: 0.33
+    vol_high_percentile: 0.67
+    trend_threshold: 0.02  # 2% trend threshold
+    transition_sizing_scalar: 0.50  # 50% size during transitions
+    regime_lookback: 252
+
+  multi_factor:
+    enabled: true
+    factors:
+      momentum:
+        weight: 0.30
+        lookback_periods: [21, 63]
+      volatility:
+        weight: 0.25
+        lookback: 20
+      value:
+        weight: 0.25
+        ma_period: 200
+      quality:
+        weight: 0.20
+        lookback: 60
+    adapt_factor_weights: true
+    adaptation_rate: 0.05
+    max_correlation: 0.85
+
+  ensemble:
+    enabled: true
+    combination_method: weighted_average  # weighted_average, voting, confidence_weighted
+    weight_update_method: sharpe  # performance, sharpe, online_learning
+    min_agreement: 0.50  # 50% of strategies must agree
+    rebalance_frequency: 7  # Days
+    lookback_window: 30  # For performance-based weighting
+    learning_rate: 0.05  # For online learning
+
+# Risk Management
+risk:
+  max_portfolio_volatility: 0.20  # 20% annual
+  max_drawdown: 0.20  # 20% maximum drawdown
+  max_correlation: 0.85  # Maximum position correlation
+  var_confidence: 0.95  # 95% VaR
+  position_concentration_limit: 0.20  # 20% max per position
+  sector_concentration_limit: 0.40  # 40% max per sector
+
+# Performance Targets
+targets:
+  min_sharpe_ratio: 1.0
+  target_sharpe_ratio: 2.0
+  min_win_rate: 0.45
+  min_profit_factor: 1.5
+  max_avg_holding_period_hours: 120  # 5 days
