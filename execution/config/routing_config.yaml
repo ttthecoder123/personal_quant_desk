@@ -1,0 +1,254 @@
+# Smart Order Routing Configuration
+
+# Venue Configuration
+venues:
+  NASDAQ:
+    enabled: true
+    asset_classes: ["EQUITY"]
+    cost_per_share: 0.0030
+    maker_rebate: 0.0020
+    taker_fee: 0.0030
+    avg_latency_ms: 10
+    liquidity_score: 95
+    min_order_size: 1
+    max_order_size: 999999
+
+  NYSE:
+    enabled: true
+    asset_classes: ["EQUITY"]
+    cost_per_share: 0.0025
+    maker_rebate: 0.0015
+    taker_fee: 0.0030
+    avg_latency_ms: 12
+    liquidity_score: 98
+    min_order_size: 1
+    max_order_size: 999999
+
+  ARCA:
+    enabled: true
+    asset_classes: ["EQUITY", "ETF"]
+    cost_per_share: 0.0028
+    maker_rebate: 0.0018
+    taker_fee: 0.0028
+    avg_latency_ms: 8
+    liquidity_score: 85
+    min_order_size: 1
+    max_order_size: 999999
+
+  BATS:
+    enabled: true
+    asset_classes: ["EQUITY"]
+    cost_per_share: 0.0020
+    maker_rebate: 0.0020
+    taker_fee: 0.0025
+    avg_latency_ms: 7
+    liquidity_score: 82
+    min_order_size: 1
+    max_order_size: 999999
+
+  DARK_POOL:
+    enabled: true
+    asset_classes: ["EQUITY"]
+    cost_per_share: 0.0010
+    maker_rebate: 0.0000
+    taker_fee: 0.0010
+    avg_latency_ms: 15
+    liquidity_score: 60
+    min_order_size: 100
+    max_order_size: 999999
+    hidden_liquidity: true
+
+# Routing Strategies
+routing_strategies:
+  cost_optimized:
+    description: "Minimize total execution cost"
+    priority_factors:
+      cost: 0.6
+      liquidity: 0.3
+      latency: 0.1
+    venue_selection:
+      - BATS
+      - NYSE
+      - NASDAQ
+
+  latency_optimized:
+    description: "Minimize execution latency"
+    priority_factors:
+      latency: 0.7
+      cost: 0.2
+      liquidity: 0.1
+    venue_selection:
+      - BATS
+      - ARCA
+      - NASDAQ
+
+  liquidity_seeking:
+    description: "Maximize fill probability"
+    priority_factors:
+      liquidity: 0.7
+      cost: 0.2
+      latency: 0.1
+    venue_selection:
+      - NYSE
+      - NASDAQ
+      - ARCA
+      - DARK_POOL
+
+  balanced:
+    description: "Balance all factors"
+    priority_factors:
+      cost: 0.35
+      liquidity: 0.35
+      latency: 0.30
+    venue_selection:
+      - NYSE
+      - NASDAQ
+      - BATS
+      - ARCA
+
+# Symbol-specific Routing Rules
+symbol_routing_rules:
+  large_cap:
+    symbols: ["AAPL", "MSFT", "GOOGL", "AMZN"]
+    strategy: "liquidity_seeking"
+    primary_venue: "NYSE"
+    backup_venues: ["NASDAQ", "ARCA"]
+
+  mid_cap:
+    strategy: "balanced"
+    primary_venue: "NASDAQ"
+
+  small_cap:
+    strategy: "cost_optimized"
+    primary_venue: "BATS"
+
+  etf:
+    asset_class: "ETF"
+    strategy: "cost_optimized"
+    primary_venue: "ARCA"
+
+# Order Size Routing
+size_based_routing:
+  small_orders:
+    max_quantity: 100
+    strategy: "latency_optimized"
+    single_venue: true
+
+  medium_orders:
+    min_quantity: 100
+    max_quantity: 1000
+    strategy: "balanced"
+    allow_splits: false
+
+  large_orders:
+    min_quantity: 1000
+    max_quantity: 10000
+    strategy: "liquidity_seeking"
+    allow_splits: true
+    max_venues: 3
+
+  block_orders:
+    min_quantity: 10000
+    strategy: "cost_optimized"
+    use_dark_pools: true
+    allow_splits: true
+    max_venues: 5
+
+# Time-based Routing
+time_based_routing:
+  market_open:
+    time_range: ["09:30", "10:00"]
+    strategy: "liquidity_seeking"
+    avoid_venues: []
+
+  mid_day:
+    time_range: ["10:00", "15:30"]
+    strategy: "balanced"
+
+  market_close:
+    time_range: ["15:30", "16:00"]
+    strategy: "latency_optimized"
+    avoid_venues: ["DARK_POOL"]
+
+# Smart Order Routing Parameters
+smart_routing:
+  enabled: true
+  min_improvement_bps: 1  # Minimum improvement to reroute
+  max_venues_per_order: 3
+  venue_timeout_seconds: 5
+  enable_venue_failover: true
+  failover_attempts: 2
+
+  # Liquidity aggregation
+  liquidity_aggregation:
+    enabled: true
+    consolidate_nbbo: true
+    include_dark_pools: true
+    min_displayed_size: 100
+
+  # Cost analysis
+  cost_analysis:
+    include_commissions: true
+    include_exchange_fees: true
+    include_sec_fees: true
+    include_market_impact: true
+    confidence_level: 0.95
+
+  # Latency monitoring
+  latency_monitoring:
+    enabled: true
+    track_venue_latency: true
+    track_broker_latency: true
+    alert_threshold_ms: 500
+    auto_disable_slow_venues: false
+
+# Venue Performance Tracking
+performance_tracking:
+  enabled: true
+  track_fill_rate: true
+  track_price_improvement: true
+  track_adverse_selection: true
+  window_size_orders: 1000
+  min_samples_for_decision: 100
+
+# Routing Optimization
+optimization:
+  algorithm: "weighted_score"  # weighted_score, ml_based, rule_based
+  reoptimize_interval_minutes: 60
+  backtest_routing_decisions: true
+
+  # Machine learning routing (if enabled)
+  ml_routing:
+    enabled: false
+    model_path: "models/routing_model.pkl"
+    features:
+      - "order_size"
+      - "symbol_volatility"
+      - "time_of_day"
+      - "venue_liquidity"
+      - "venue_cost"
+    retrain_interval_days: 7
+
+# Regulatory Compliance
+compliance:
+  reg_nms_enabled: true
+  mifid_ii_enabled: false
+  best_execution_policy: "price_improvement"
+  order_protection_enabled: true
+  locked_market_handling: "route_away"
+
+# Dark Pool Settings
+dark_pools:
+  enabled: true
+  min_order_size: 100
+  max_participation: 0.30
+  time_limit_seconds: 60
+  fallback_to_lit: true
+
+  dark_pool_preferences:
+    - name: "DARK_POOL_1"
+      priority: 1
+      min_size: 100
+    - name: "DARK_POOL_2"
+      priority: 2
+      min_size: 500

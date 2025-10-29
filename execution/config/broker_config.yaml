@@ -1,0 +1,70 @@
+# Broker Configuration for Execution System
+
+# Interactive Brokers Configuration
+interactive_brokers:
+  host: "127.0.0.1"
+  port: 7497  # TWS paper trading port (live: 7496)
+  client_id: 1
+  account: "DU1234567"  # Paper trading account
+  timeout: 30
+  auto_reconnect: true
+  max_reconnect_attempts: 5
+
+# Alpaca Configuration
+alpaca:
+  api_key: "${ALPACA_API_KEY}"  # Set via environment variable
+  secret_key: "${ALPACA_SECRET_KEY}"  # Set via environment variable
+  base_url: "https://paper-api.alpaca.markets"  # Paper trading
+  # base_url: "https://api.alpaca.markets"  # Live trading
+  data_url: "https://data.alpaca.markets"
+  stream_url: "wss://stream.data.alpaca.markets"
+
+# Paper Trading Configuration
+paper_trading:
+  enabled: true
+  initial_cash: 100000
+  slippage_bps: 5
+  latency_ms: 50
+  fill_probability: 0.95
+  partial_fill_probability: 0.10
+  commission_per_share: 0.005
+  enable_market_hours: true
+  enable_shorts: true
+
+# FIX Protocol Configuration
+fix_protocol:
+  enabled: false
+  config_file: "fix_config.cfg"
+  sender_comp_id: "CLIENT"
+  target_comp_id: "BROKER"
+  host: "fix.broker.com"
+  port: 5001
+
+# Broker Capabilities Matrix
+broker_capabilities:
+  interactive_brokers:
+    asset_classes: ["EQUITY", "OPTION", "FUTURE", "FOREX", "CRYPTO"]
+    exchanges: ["NASDAQ", "NYSE", "ARCA", "BATS"]
+    max_order_size: 1000000
+    commission_per_share: 0.005
+    supports_algo: true
+    avg_latency_ms: 50
+    supports_extended_hours: true
+
+  alpaca:
+    asset_classes: ["EQUITY", "CRYPTO"]
+    exchanges: ["NASDAQ", "NYSE"]
+    max_order_size: 100000
+    commission_per_share: 0.0  # Commission-free
+    supports_algo: false
+    avg_latency_ms: 100
+    supports_extended_hours: true
+
+  paper_trading:
+    asset_classes: ["EQUITY", "OPTION", "FUTURE", "FOREX", "CRYPTO"]
+    exchanges: ["ALL"]
+    max_order_size: .inf
+    commission_per_share: 0.0
+    supports_algo: true
+    avg_latency_ms: 1
+    supports_extended_hours: true

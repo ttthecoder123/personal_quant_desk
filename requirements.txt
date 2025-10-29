@@ -129,3 +129,10 @@ sphinx-rtd-theme>=1.3.0
 jinja2>=3.1.2       # HTML report generation
 reportlab>=4.0.0    # PDF report generation
 weasyprint>=59.0    # Alternative PDF generation
+
+# Execution & OMS Dependencies (Step 8)
+ibapi>=9.81.1       # Interactive Brokers API
+quickfix>=1.15.1    # FIX protocol
+arctic>=1.79.4      # Tick data storage (requires MongoDB)
+websocket-client>=1.6.4  # WebSocket for real-time feeds
+websockets>=12.0    # Async WebSocket support
