@@ -1,0 +1,310 @@
+# Backtesting Configuration
+# Configuration for backtesting engine and strategy testing
+
+# Simulation Parameters
+simulation:
+  start_date: "2018-01-01"
+  end_date: "2023-12-31"
+  initial_capital: 1000000
+  data_frequency: "1D"  # 1D, 1H, 5min, 1min
+  currency: "USD"
+
+  # Engine selection
+  engine_type: "event_driven"  # event_driven, vectorized, simulation, walk_forward
+
+  # Time zone
+  timezone: "America/New_York"
+
+# Execution Settings
+execution:
+  # Fill model
+  fill_model: "probabilistic"  # realistic, instant, probabilistic
+
+  # Slippage model
+  slippage_model: "dynamic"  # fixed, variable, dynamic
+  slippage_bps: 5  # Basis points (if fixed)
+
+  # Commission model
+  commission_model: "tiered"  # fixed, tiered, maker_taker, percentage
+  commission_rate: 0.0005  # 0.05% for percentage model
+  min_commission: 1.0  # Minimum per trade
+
+  # Market impact
+  enable_market_impact: true
+  impact_model: "almgren_chriss"  # linear, sqrt, almgren_chriss
+
+  # Order types
+  allowed_order_types:
+    - "MARKET"
+    - "LIMIT"
+    - "STOP"
+
+# Cost Modeling
+costs:
+  # Commission settings
+  commissions:
+    model: "interactive_brokers"  # interactive_brokers, td_ameritrade, custom
+    pricing_plan: "tiered"  # fixed, tiered
+
+  # Spread costs
+  spreads:
+    model: "dynamic"  # fixed, dynamic
+    base_spread_bps: 5
+
+  # Borrow costs (for short selling)
+  borrow_costs:
+    model: "tiered"  # general_collateral, tiered, demand_based
+    easy_to_borrow_rate: 0.005  # 0.5% annualized
+    hard_to_borrow_rate: 0.10   # 10% annualized
+
+  # Funding costs
+  funding_costs:
+    model: "tiered"  # tiered, fixed
+    base_margin_rate: 0.08  # 8% for base tier
+
+  # Tax modeling
+  taxes:
+    enabled: true
+    short_term_rate: 0.37  # 37% federal + state
+    long_term_rate: 0.20   # 20% long-term capital gains
+    holding_period_days: 365  # Days for long-term treatment
+    wash_sale_enabled: true
+    lot_matching: "FIFO"  # FIFO, LIFO, HIFO, SpecificID
+
+# Risk Management
+risk:
+  # Position limits
+  max_position_pct: 0.20  # 20% of portfolio per position
+  max_sector_pct: 0.40    # 40% per sector
+  max_leverage: 2.0       # 2x maximum leverage
+
+  # Risk controls
+  volatility_target: 0.20  # 20% annualized portfolio volatility
+  max_drawdown: 0.20       # 20% max drawdown before circuit breaker
+  var_limit: 0.02          # 2% daily VaR at 95% confidence
+
+  # Circuit breakers
+  circuit_breakers:
+    enabled: true
+    levels:
+      - threshold: 0.05
+        action: "warning"
+      - threshold: 0.10
+        action: "reduce_25pct"
+      - threshold: 0.15
+        action: "reduce_50pct"
+      - threshold: 0.20
+        action: "halt"
+
+# Validation Settings
+validation:
+  # Walk-forward analysis
+  walk_forward:
+    enabled: true
+    train_period: 252      # Trading days (1 year)
+    test_period: 63        # Trading days (1 quarter)
+    window_type: "rolling" # rolling, expanding
+    purge_pct: 0.02        # 2% purge
+    embargo_pct: 0.01      # 1% embargo
+
+  # Cross-validation
+  cv_folds: 5
+  cv_type: "time_series"  # time_series, purged, combinatorial
+
+  # Statistical tests
+  significance_level: 0.05
+  bootstrap_samples: 10000
+
+  # Overfitting detection
+  overfitting_detection:
+    enabled: true
+    pbo_threshold: 0.50     # Probability of backtest overfitting
+    deflation_factor: 1.0   # Sharpe ratio deflation
+
+# Optimization Settings
+optimization:
+  # Method selection
+  method: "bayesian"  # grid, random, bayesian, genetic, hyperband
+
+  # Grid search
+  grid_search:
+    exhaustive: false
+
+  # Random search
+  random_search:
+    n_iter: 100
+    sampling: "latin_hypercube"  # uniform, latin_hypercube
+
+  # Bayesian optimization
+  bayesian:
+    n_iter: 100
+    n_initial_points: 20
+    acquisition_function: "EI"  # EI, PI, LCB
+
+  # Genetic algorithm
+  genetic:
+    population_size: 50
+    n_generations: 100
+    crossover_rate: 0.8
+    mutation_rate: 0.1
+    elitism_rate: 0.1
+
+  # Hyperband
+  hyperband:
+    max_resource: 81
+    reduction_factor: 3
+
+  # Parallel execution
+  n_jobs: 4  # Number of parallel jobs (-1 for all cores)
+
+  # Objective function
+  objective_metric: "sharpe_ratio"  # sharpe_ratio, sortino_ratio, calmar_ratio, information_ratio
+
+# Performance Metrics
+metrics:
+  # Risk-free rate for Sharpe calculation
+  risk_free_rate: 0.02  # 2% annualized
+
+  # Benchmark
+  benchmark_symbol: "SPY"
+
+  # Rolling windows for metrics
+  rolling_windows:
+    - 21   # 1 month
+    - 63   # 1 quarter
+    - 252  # 1 year
+
+  # Metrics to calculate
+  calculate_metrics:
+    - "sharpe_ratio"
+    - "sortino_ratio"
+    - "calmar_ratio"
+    - "omega_ratio"
+    - "information_ratio"
+    - "max_drawdown"
+    - "var_95"
+    - "cvar_95"
+    - "beta"
+    - "alpha"
+    - "win_rate"
+    - "profit_factor"
+
+# Reporting
+reporting:
+  # Report generation
+  generate_html: true
+  generate_pdf: true
+  generate_json: true
+
+  # Output directory
+  output_dir: "backtesting/results"
+
+  # Charts to include
+  charts:
+    - "equity_curve"
+    - "underwater_plot"
+    - "returns_distribution"
+    - "monthly_returns_heatmap"
+    - "rolling_sharpe"
+    - "rolling_volatility"
+    - "drawdown_periods"
+
+  # Comparison reporting
+  comparison:
+    enabled: true
+    strategies: []  # List of strategy names to compare
+
+  # Tear sheet
+  tear_sheet:
+    style: "pyfolio"  # pyfolio, quantstats, custom
+    include_factor_analysis: false
+
+# Scenario Testing
+scenarios:
+  # Historical scenarios
+  historical:
+    enabled: true
+    scenarios:
+      - "dotcom_bubble"
+      - "financial_crisis_2008"
+      - "flash_crash_2010"
+      - "covid_crash_2020"
+      - "rate_shock_2022"
+
+  # Stress testing
+  stress:
+    enabled: true
+    scenarios:
+      - name: "correlation_breakdown"
+        parameters:
+          target_correlation: 1.0
+      - name: "volatility_explosion"
+        parameters:
+          vol_multiplier: 2.0
+      - name: "liquidity_crisis"
+        parameters:
+          spread_multiplier: 5.0
+      - name: "black_swan"
+        parameters:
+          return_shock: -0.20
+
+  # Monte Carlo scenarios
+  monte_carlo:
+    enabled: true
+    n_simulations: 1000
+    methods:
+      - "bootstrap"
+      - "parametric"
+      - "garch"
+
+# Data Handling
+data:
+  # Data source
+  data_dir: "data/processed"
+
+  # Data quality
+  min_quality_score: 70
+
+  # Survivorship bias
+  survivorship_bias:
+    enabled: true
+    include_delisted: true
+
+  # Point-in-time data
+  point_in_time:
+    enabled: true
+    fundamental_lag_days: 45  # 45 days for fundamental data
+
+  # Data alignment
+  alignment:
+    method: "business_days"  # business_days, outer, inner
+    fill_method: "ffill"     # ffill, bfill, interpolate
+
+  # Timezone handling
+  timezone_conversion: true
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_trades: true
+  log_signals: true
+  log_risk_checks: true
+  log_file: "backtesting/logs/backtest.log"
+
+# Advanced Settings
+advanced:
+  # Memory management
+  memory_limit_gb: 8
+  use_chunking: true
+  chunk_size: 10000
+
+  # Caching
+  enable_caching: true
+  cache_dir: "backtesting/cache"
+
+  # Random seed for reproducibility
+  random_seed: 42
+
+  # Multiprocessing
+  multiprocessing: true
+  max_workers: 4
