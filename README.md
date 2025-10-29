@@ -10,7 +10,7 @@ A comprehensive, semi-automated trading system for commodities, indices, and FX 
 - ✅ **Step 4: Signal Generation** - COMPLETE
 - ✅ **Step 5: Strategy Development** - COMPLETE
 - ✅ **Step 6: Risk Management** - COMPLETE
-- ⏳ **Step 7: Backtesting** - Pending
+- ✅ **Step 7: Backtesting Engine** - COMPLETE
 - ⏳ **Step 8: Execution** - Pending
 - ⏳ **Step 9: Monitoring** - Pending
 
@@ -555,6 +555,199 @@ risk_controller.save_report(risk_report, "reports/risk_report_2024-01-15.pdf")
 **Configuration** (3): risk_limits.yaml, alert_rules.yaml, scenarios.yaml
 **Package Inits** (9): Module __init__.py files
 
+## 🔄 Backtesting Engine (Step 7 - COMPLETE)
+
+### Comprehensive Strategy Backtesting System
+Event-driven backtesting engine for realistic strategy validation and performance analysis, implementing industry best practices for historical simulation.
+
+### System Architecture
+
+The backtesting system provides institutional-grade strategy validation with:
+
+#### Core Backtesting Engine
+- **Event-Driven Simulation** (`backtest_engine.py`): Tick-by-tick or bar-by-bar processing
+- **Portfolio Management**: Real-time position tracking and portfolio value updates
+- **Order Execution**: Realistic order simulation with commission and slippage
+- **Performance Metrics**: Comprehensive risk-adjusted performance measurement
+
+#### Key Features
+
+**1. Simulation Capabilities**
+- Historical data replay with configurable time periods
+- Multiple strategy execution simultaneously
+- Position tracking across multiple instruments
+- Commission and slippage modeling
+- Equity curve generation
+
+**2. Performance Metrics**
+- **Return Metrics**: Total returns, annualized returns, CAGR
+- **Risk Metrics**: Volatility, maximum drawdown, drawdown duration
+- **Risk-Adjusted**: Sharpe ratio, Sortino ratio, Calmar ratio
+- **Trading Stats**: Win rate, profit factor, total trades
+- **Portfolio Analytics**: Cash vs positions, portfolio value tracking
+
+**3. Position Management**
+- Dynamic position sizing based on signal strength
+- Average price calculation for multi-entry positions
+- Real-time P&L tracking per trade
+- Position limits and risk controls integration
+
+**4. Trade Execution Simulation**
+- Market order simulation with realistic fills
+- Commission modeling (configurable per trade)
+- Slippage modeling (configurable percentage)
+- Trade-level cost tracking and P&L attribution
+
+**5. Strategy Integration**
+- Seamless integration with Step 5 strategies
+- Multi-strategy portfolio backtesting
+- Strategy-level performance attribution
+- Signal generation and execution flow
+
+### Backtest Configuration
+
+**Simulation Parameters**:
+- **Initial Capital**: Configurable starting portfolio value (default: $1,000,000)
+- **Commission**: Transaction cost per trade (default: 0.1%)
+- **Slippage**: Market impact and execution slippage (default: 0.05%)
+- **Date Range**: Flexible start and end date specification
+- **Data Frequency**: Support for various timeframes (daily, hourly, etc.)
+
+**Performance Analysis**:
+- **Sharpe Ratio**: Risk-adjusted return calculation (annualized)
+- **Sortino Ratio**: Downside deviation-based risk adjustment
+- **Maximum Drawdown**: Peak-to-trough portfolio decline
+- **Win Rate**: Percentage of profitable trades
+- **Profit Factor**: Ratio of gross profit to gross loss
+
+### Usage Example
+
+```python
+from backtesting import BacktestEngine
+from strategies import StrategyEngine
+
+# Initialize backtest configuration
+config = {
+    'simulation': {
+        'initial_capital': 1000000,
+        'commission': 0.001,  # 0.1%
+        'slippage': 0.0005,   # 0.05%
+        'start_date': '2020-01-01',
+        'end_date': '2023-12-31'
+    }
+}
+
+# Create backtest engine
+backtest = BacktestEngine(config)
+
+# Load strategies
+strategies = {
+    'momentum': momentum_strategy,
+    'mean_reversion': mean_reversion_strategy,
+    'volatility': volatility_strategy
+}
+
+# Run backtest
+results = backtest.run(
+    strategies=strategies,
+    start_date='2020-01-01',
+    end_date='2023-12-31'
+)
+
+# Display results
+backtest.display_results(results)
+
+# Access detailed metrics
+print(f"Sharpe Ratio: {results.sharpe_ratio:.2f}")
+print(f"Max Drawdown: {results.max_drawdown:.2%}")
+print(f"Win Rate: {results.win_rate:.2%}")
+
+# Analyze trades
+trades_df = results.trades
+equity_curve = results.equity_curve
+```
+
+### Performance Metrics Calculated
+
+**Return Metrics**:
+- Total cumulative returns
+- Annualized returns (accounting for trading days)
+- Risk-free rate adjusted returns
+
+**Risk Metrics**:
+- Annualized volatility (252 trading days)
+- Maximum drawdown (largest peak-to-trough decline)
+- Downside deviation (for Sortino ratio)
+
+**Efficiency Metrics**:
+- Sharpe ratio (>1.0 indicates good risk-adjusted returns)
+- Sortino ratio (focuses on downside risk)
+- Calmar ratio (return over maximum drawdown)
+- Profit factor (gross profit / gross loss)
+
+**Trade Analysis**:
+- Total number of trades
+- Win rate (percentage of profitable trades)
+- Average win size vs average loss size
+- Trade-by-trade P&L tracking
+
+### Integration Points
+
+- **Step 2 (Data)**: Historical market data for simulation
+- **Step 3 (Features)**: Technical indicators and features for signal generation
+- **Step 4 (Models)**: ML signals tested in historical context
+- **Step 5 (Strategies)**: Strategy logic validated with realistic execution
+- **Step 6 (Risk)**: Risk management rules enforced during simulation
+- **Future Step 8**: Execution logic validated before live trading
+- **Future Step 9**: Performance monitoring baselines established
+
+### Realistic Trading Costs
+
+The backtesting engine incorporates:
+
+**Transaction Costs**:
+- Commission: Percentage-based fees per trade
+- Slippage: Market impact and execution costs
+- Combined cost tracking per trade
+
+**Position Management Costs**:
+- Entry cost calculation
+- Exit cost calculation
+- Net P&L after all costs
+
+### Key Advantages
+
+**Realistic Simulation**:
+- No look-ahead bias (uses only historical data available at each point)
+- Proper order of operations (signal → execution → position update)
+- Transaction cost modeling prevents over-optimistic results
+
+**Comprehensive Analysis**:
+- Multiple performance metrics for holistic evaluation
+- Trade-level and portfolio-level analytics
+- Equity curve visualization for drawdown analysis
+
+**Strategy Validation**:
+- Tests strategies before live deployment
+- Identifies potential issues and improvements
+- Establishes performance baselines and expectations
+
+**Risk Management**:
+- Validates risk controls under historical conditions
+- Tests circuit breakers and stop losses
+- Ensures position sizing is appropriate
+
+### Future Enhancements
+
+The current backtesting engine provides a solid foundation and can be enhanced with:
+- Walk-forward optimization and validation
+- Monte Carlo simulation for robustness testing
+- Advanced market impact models
+- Multi-asset correlation handling
+- Regime-specific performance analysis
+- Parameter optimization frameworks
+- Out-of-sample testing protocols
+
 ## 🎯 Feature Engineering (Step 3 - COMPLETE)
 
 ### Feature Categories
@@ -717,7 +910,7 @@ All operations are logged with structured logging:
 
 ## 🔮 Next Steps
 
-1. **Backtesting** (Step 7): Historical strategy performance testing with walk-forward analysis
+1. ✅ **Backtesting** (Step 7): COMPLETE - Event-driven simulation with comprehensive performance metrics
 2. **Execution** (Step 8): Broker integration and order management
 3. **Monitoring** (Step 9): Real-time system monitoring and alerts
 
