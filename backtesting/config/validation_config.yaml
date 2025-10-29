@@ -1,0 +1,454 @@
+# Validation Configuration
+# Configuration for strategy validation and overfitting detection
+
+# Statistical Tests
+statistical_tests:
+  # Confidence level
+  confidence_level: 0.95
+
+  # Sharpe ratio tests
+  sharpe_test:
+    enabled: true
+    use_johnson_formula: true  # Account for skewness and kurtosis
+    min_observations: 30
+
+  # Information ratio test
+  information_ratio_test:
+    enabled: true
+    benchmark_symbol: "SPY"
+
+  # Maximum drawdown test
+  max_drawdown_test:
+    enabled: true
+    n_simulations: 10000  # Monte Carlo simulations for MDD distribution
+
+  # Win rate confidence intervals
+  win_rate_test:
+    enabled: true
+    method: "wilson"  # wilson, agresti_coull, exact
+
+  # Profit factor test
+  profit_factor_test:
+    enabled: true
+    bootstrap_samples: 10000
+
+  # Non-parametric tests
+  non_parametric:
+    mann_whitney_u: true
+    runs_test: true
+    ks_test: true
+
+  # Normality tests
+  normality_tests:
+    shapiro_wilk: true
+    jarque_bera: true
+    anderson_darling: true
+
+# Overfitting Detection
+overfitting_detection:
+  enabled: true
+
+  # Probability of Backtest Overfitting (PBO)
+  pbo:
+    enabled: true
+    n_simulations: 1000
+    threshold: 0.50  # Reject if PBO > 50%
+
+  # Deflated Sharpe Ratio (Bailey-López de Prado)
+  deflated_sharpe:
+    enabled: true
+    adjustment_method: "bonferroni"  # bonferroni, holm, bh
+
+  # Multiple testing correction
+  multiple_testing:
+    enabled: true
+    methods:
+      - "bonferroni"
+      - "holm"
+      - "benjamini_hochberg"
+    alpha: 0.05
+
+  # False Discovery Rate
+  fdr:
+    enabled: true
+    method: "bh"  # Benjamini-Hochberg
+    alpha: 0.05
+
+  # Strategy complexity penalty
+  complexity_penalty:
+    enabled: true
+    methods:
+      - "aic"   # Akaike Information Criterion
+      - "bic"   # Bayesian Information Criterion
+      - "hqic"  # Hannan-Quinn Information Criterion
+
+  # Effective number of tests
+  effective_tests:
+    method: "eigenvalue"  # eigenvalue, bailey_lopez_prado
+    correlation_threshold: 0.50
+
+# Combinatorial Purged Cross-Validation (CPCV)
+cpcv:
+  enabled: true
+
+  # Number of splits
+  n_splits: 10
+
+  # Number of test splits per combination
+  n_test_splits: 2
+
+  # Purging (remove overlapping observations)
+  purge_pct: 0.02  # 2% of training period
+
+  # Embargo (prevent information leakage)
+  embargo_pct: 0.01  # 1% of test period
+
+  # Combinatorial analysis
+  combinatorial:
+    max_combinations: 1000  # Limit for large datasets
+    sample_combinations: false  # Sample if > max_combinations
+
+  # Parallel execution
+  n_jobs: 4
+
+# Walk-Forward Validation
+walk_forward:
+  enabled: true
+
+  # Window configuration
+  train_period: 252  # Trading days (1 year)
+  test_period: 63    # Trading days (1 quarter)
+
+  # Window type
+  window_type: "rolling"  # rolling, expanding, anchored
+
+  # Purge and embargo
+  purge_pct: 0.02
+  embargo_pct: 0.01
+
+  # Minimum windows required
+  min_windows: 4
+
+  # Parameter stability
+  track_parameter_stability: true
+  stability_threshold: 0.30  # Max coefficient of variation
+
+  # Adaptive parameters
+  adaptive_params: true  # Use previous window's params as starting point
+
+# Bootstrap Validation
+bootstrap:
+  enabled: true
+
+  # Number of bootstrap samples
+  n_samples: 10000
+
+  # Bootstrap type
+  bootstrap_type: "block"  # standard, block, stationary
+
+  # Block size (for block bootstrap)
+  block_size: 20  # Trading days
+
+  # Confidence intervals
+  confidence_intervals:
+    - 0.90
+    - 0.95
+    - 0.99
+
+  # Bias correction
+  bias_correction: "bca"  # none, basic, percentile, bca
+
+# Monte Carlo Validation
+monte_carlo:
+  enabled: true
+
+  # Number of simulations
+  n_simulations: 10000
+
+  # Simulation methods
+  methods:
+    - "bootstrap"
+    - "parametric"
+    - "garch"
+    - "historical"
+
+  # Randomization tests
+  randomization:
+    enabled: true
+    shuffle_method: "permutation"  # permutation, bootstrap
+
+  # Significance tests
+  significance_tests:
+    sharpe_ratio: true
+    max_drawdown: true
+    win_rate: true
+
+# Parameter Stability Analysis
+parameter_stability:
+  enabled: true
+
+  # Sensitivity analysis
+  sensitivity_analysis:
+    enabled: true
+    perturbation_pct: 0.10  # 10% parameter perturbation
+    n_perturbations: 50
+
+  # Sub-period analysis
+  sub_period_analysis:
+    enabled: true
+    n_periods: 4  # Divide sample into N periods
+    min_period_length: 252  # Minimum period length in days
+
+  # Robust parameter regions
+  robust_regions:
+    enabled: true
+    n_monte_carlo: 1000
+    performance_threshold: 0.80  # 80% of optimal
+
+  # Parameter correlation
+  parameter_correlation:
+    enabled: true
+    correlation_threshold: 0.70
+
+  # Drift detection
+  drift_detection:
+    enabled: true
+    method: "cusum"  # cusum, ewma
+    alert_threshold: 3.0  # Standard deviations
+
+# Regime Analysis
+regime_analysis:
+  enabled: true
+
+  # Market regimes
+  market_regimes:
+    bull_bear:
+      enabled: true
+      method: "returns"  # returns, hmm, trend
+      bull_threshold: 0.0  # Positive average returns
+      min_regime_length: 63  # Minimum 1 quarter
+
+    volatility:
+      enabled: true
+      method: "rolling"  # rolling, garch, hmm
+      window: 63  # Rolling window for vol calculation
+      high_vol_threshold: 0.25  # 25% annualized
+      low_vol_threshold: 0.10   # 10% annualized
+
+    correlation:
+      enabled: true
+      window: 63
+      high_corr_threshold: 0.70
+      low_corr_threshold: 0.30
+
+  # Crisis periods (predefined)
+  crisis_periods:
+    enabled: true
+    periods:
+      - name: "dotcom_bubble"
+        start: "2000-03-24"
+        end: "2002-10-09"
+      - name: "financial_crisis"
+        start: "2007-10-09"
+        end: "2009-03-09"
+      - name: "flash_crash"
+        start: "2010-05-06"
+        end: "2010-05-06"
+      - name: "covid_crash"
+        start: "2020-02-20"
+        end: "2020-03-23"
+      - name: "rate_shock_2022"
+        start: "2022-01-01"
+        end: "2022-10-31"
+
+  # Seasonal analysis
+  seasonal_analysis:
+    month_of_year: true
+    day_of_week: true
+    time_of_day: false  # Requires intraday data
+
+  # Statistical tests per regime
+  regime_tests:
+    t_test: true        # Compare regime vs overall
+    mann_whitney: true
+    ks_test: true
+
+# Data Quality Validation
+data_quality:
+  enabled: true
+
+  # Missing data thresholds
+  missing_data:
+    max_missing_pct: 0.05  # Reject if > 5% missing
+    consecutive_missing: 5  # Max consecutive missing days
+
+  # Outlier detection
+  outlier_detection:
+    enabled: true
+    method: "iqr"  # iqr, z_score, isolation_forest
+    threshold: 3.0  # Standard deviations or IQR multiplier
+
+  # Price jump detection
+  price_jumps:
+    enabled: true
+    threshold: 0.50  # 50% single-day move (likely split/error)
+
+  # Volume anomalies
+  volume_anomalies:
+    enabled: true
+    threshold: 5.0  # 5x average volume
+
+  # OHLC consistency
+  ohlc_checks:
+    enabled: true
+    strict_mode: true  # Reject any OHLC violations
+
+  # Staleness detection
+  staleness:
+    enabled: true
+    max_unchanged_days: 5
+
+# Look-Ahead Bias Prevention
+look_ahead_prevention:
+  enabled: true
+
+  # Point-in-time data enforcement
+  point_in_time:
+    enabled: true
+    fundamental_lag: 45  # Days after quarter end
+    earnings_lag: 1      # Days after announcement
+
+  # Data timestamp validation
+  timestamp_validation:
+    enabled: true
+    strict_mode: true
+
+  # Embargo after test periods
+  embargo_enforcement:
+    enabled: true
+    default_embargo_pct: 0.01
+
+# Survivorship Bias Detection
+survivorship_bias:
+  enabled: true
+
+  # Include delisted securities
+  include_delisted: true
+
+  # Universe consistency check
+  universe_check:
+    enabled: true
+    track_additions: true
+    track_deletions: true
+
+  # IPO date validation
+  ipo_validation:
+    enabled: true
+    min_trading_days: 252  # Require 1 year of history
+
+# In-Sample vs Out-of-Sample
+is_oos_analysis:
+  enabled: true
+
+  # Split ratio
+  train_test_split: 0.70  # 70% training, 30% testing
+
+  # Metrics comparison
+  compare_metrics:
+    - "sharpe_ratio"
+    - "sortino_ratio"
+    - "max_drawdown"
+    - "win_rate"
+
+  # Degradation thresholds
+  degradation_threshold:
+    sharpe_ratio: 0.30  # Warn if OOS Sharpe < 70% of IS Sharpe
+    max_drawdown: 0.50  # Warn if OOS MDD > 50% worse
+
+# Validation Reporting
+reporting:
+  # Generate validation report
+  generate_report: true
+
+  # Report format
+  formats:
+    - "html"
+    - "pdf"
+    - "json"
+
+  # Output directory
+  output_dir: "backtesting/results/validation"
+
+  # Sections to include
+  sections:
+    - "statistical_tests"
+    - "overfitting_detection"
+    - "parameter_stability"
+    - "regime_analysis"
+    - "is_oos_comparison"
+    - "monte_carlo_results"
+
+  # Visualization
+  charts:
+    - "sharpe_confidence_intervals"
+    - "parameter_stability"
+    - "regime_performance"
+    - "is_oos_comparison"
+    - "pbo_distribution"
+
+# Thresholds for Pass/Fail
+pass_fail_criteria:
+  # Statistical significance
+  min_sharpe_ratio: 1.0
+  min_sharpe_pvalue: 0.05  # Must be statistically significant
+
+  # Overfitting
+  max_pbo: 0.50           # PBO must be < 50%
+  min_deflated_sharpe: 0.50  # Deflated Sharpe must be > 0.5
+
+  # Parameter stability
+  max_cv_params: 0.50     # Coefficient of variation < 50%
+
+  # IS/OOS performance
+  min_oos_is_ratio: 0.50  # OOS Sharpe must be > 50% of IS Sharpe
+
+  # Data quality
+  min_quality_score: 70   # Data quality score > 70
+
+  # Minimum trades
+  min_trades: 30          # Must have at least 30 trades
+
+  # Minimum test period
+  min_test_days: 252      # At least 1 year of testing
+
+# Alert Configuration
+alerts:
+  # Enable alerts for validation failures
+  enabled: true
+
+  # Alert levels
+  levels:
+    - "warning"   # Soft failures
+    - "critical"  # Hard failures
+
+  # Alert channels
+  channels:
+    - "log"       # Write to log file
+    - "console"   # Print to console
+
+# Advanced Settings
+advanced:
+  # Parallel execution
+  parallel_execution: true
+  n_jobs: 4
+
+  # Random seed for reproducibility
+  random_seed: 42
+
+  # Memory management
+  memory_efficient: true
+  max_memory_gb: 8
+
+  # Caching
+  cache_results: true
+  cache_dir: "backtesting/cache/validation"
