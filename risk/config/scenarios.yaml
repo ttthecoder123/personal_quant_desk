@@ -1,0 +1,299 @@
+# Stress Test Scenarios Configuration
+
+scenarios:
+  # Historical Scenarios
+  - name: financial_crisis_2008
+    type: historical
+    description: "2008 Financial Crisis (Lehman Brothers collapse)"
+    probability: 0.01
+    shocks:
+      SPY: -0.40
+      QQQ: -0.45
+      "^AXJO": -0.38
+      "GC=F": 0.10
+      "HG=F": -0.35
+      "CL=F": -0.50
+      "AUDUSD=X": -0.20
+      "USDJPY=X": 0.15
+      "EURUSD=X": -0.10
+
+  - name: covid_crash_2020
+    type: historical
+    description: "2020 COVID-19 Market Crash (March)"
+    probability: 0.02
+    shocks:
+      SPY: -0.30
+      QQQ: -0.25
+      "^AXJO": -0.32
+      "GC=F": 0.15
+      "HG=F": -0.20
+      "CL=F": -0.65
+      "AUDUSD=X": -0.15
+      "USDJPY=X": 0.10
+      "EURUSD=X": -0.05
+
+  - name: rate_shock_2022
+    type: historical
+    description: "2022 Federal Reserve Rate Hiking Cycle"
+    probability: 0.05
+    shocks:
+      SPY: -0.20
+      QQQ: -0.30
+      "^AXJO": -0.18
+      "GC=F": -0.05
+      "HG=F": -0.15
+      "CL=F": 0.10
+      "AUDUSD=X": -0.08
+      "USDJPY=X": 0.20
+      "EURUSD=X": -0.15
+
+  - name: flash_crash_2010
+    type: historical
+    description: "Flash Crash Event (2010-style)"
+    probability: 0.03
+    shocks:
+      SPY: -0.10
+      QQQ: -0.12
+      "^AXJO": -0.08
+      "GC=F": 0.05
+      "HG=F": -0.05
+      "CL=F": -0.08
+      "AUDUSD=X": -0.05
+      "USDJPY=X": 0.03
+      "EURUSD=X": -0.03
+
+  # Hypothetical Scenarios
+  - name: interest_rate_shock_up
+    type: hypothetical
+    description: "200bps parallel rate increase"
+    probability: 0.10
+    shocks:
+      SPY: -0.15
+      QQQ: -0.20
+      "^AXJO": -0.14
+      "GC=F": -0.10
+      "HG=F": -0.08
+      "CL=F": -0.05
+      "AUDUSD=X": -0.10
+      "USDJPY=X": 0.15
+      "EURUSD=X": -0.08
+
+  - name: interest_rate_shock_down
+    type: hypothetical
+    description: "200bps parallel rate decrease"
+    probability: 0.05
+    shocks:
+      SPY: 0.10
+      QQQ: 0.15
+      "^AXJO": 0.12
+      "GC=F": 0.20
+      "HG=F": 0.10
+      "CL=F": 0.05
+      "AUDUSD=X": 0.08
+      "USDJPY=X": -0.10
+      "EURUSD=X": 0.05
+
+  - name: equity_crash_30
+    type: hypothetical
+    description: "30% equity market crash"
+    probability: 0.02
+    shocks:
+      SPY: -0.30
+      QQQ: -0.35
+      "^AXJO": -0.30
+      "GC=F": 0.15
+      "HG=F": -0.25
+      "CL=F": -0.20
+      "AUDUSD=X": -0.15
+      "USDJPY=X": 0.12
+      "EURUSD=X": -0.08
+
+  - name: equity_crash_40
+    type: hypothetical
+    description: "40% equity market crash"
+    probability: 0.01
+    shocks:
+      SPY: -0.40
+      QQQ: -0.45
+      "^AXJO": -0.40
+      "GC=F": 0.20
+      "HG=F": -0.30
+      "CL=F": -0.30
+      "AUDUSD=X": -0.20
+      "USDJPY=X": 0.15
+      "EURUSD=X": -0.12
+
+  - name: oil_price_shock_up
+    type: hypothetical
+    description: "50% oil price increase (supply shock)"
+    probability: 0.08
+    shocks:
+      SPY: -0.08
+      QQQ: -0.10
+      "^AXJO": -0.06
+      "GC=F": 0.05
+      "HG=F": 0.03
+      "CL=F": 0.50
+      "AUDUSD=X": 0.05
+      "USDJPY=X": -0.03
+      "EURUSD=X": -0.02
+
+  - name: oil_price_shock_down
+    type: hypothetical
+    description: "50% oil price decrease (demand shock)"
+    probability: 0.10
+    shocks:
+      SPY: 0.05
+      QQQ: 0.08
+      "^AXJO": 0.04
+      "GC=F": -0.03
+      "HG=F": -0.05
+      "CL=F": -0.50
+      "AUDUSD=X": -0.08
+      "USDJPY=X": 0.02
+      "EURUSD=X": 0.03
+
+  - name: currency_crisis
+    type: hypothetical
+    description: "Major currency devaluation (AUD crash)"
+    probability: 0.05
+    shocks:
+      SPY: -0.10
+      QQQ: -0.12
+      "^AXJO": -0.20
+      "GC=F": 0.15
+      "HG=F": -0.10
+      "CL=F": 0.05
+      "AUDUSD=X": -0.25
+      "USDJPY=X": 0.20
+      "EURUSD=X": -0.15
+
+  - name: gold_spike
+    type: hypothetical
+    description: "Gold price surge (safe haven buying)"
+    probability: 0.08
+    shocks:
+      SPY: -0.10
+      QQQ: -0.08
+      "^AXJO": -0.10
+      "GC=F": 0.30
+      "HG=F": 0.05
+      "CL=F": 0.00
+      "AUDUSD=X": 0.05
+      "USDJPY=X": 0.05
+      "EURUSD=X": 0.00
+
+  - name: commodity_supercycle
+    type: hypothetical
+    description: "Broad commodity price surge"
+    probability: 0.06
+    shocks:
+      SPY: 0.05
+      QQQ: 0.02
+      "^AXJO": 0.10
+      "GC=F": 0.25
+      "HG=F": 0.40
+      "CL=F": 0.35
+      "AUDUSD=X": 0.15
+      "USDJPY=X": -0.05
+      "EURUSD=X": 0.05
+
+  - name: correlation_breakdown
+    type: hypothetical
+    description: "All correlations → 1 (diversification fails)"
+    probability: 0.02
+    shocks:
+      SPY: -0.25
+      QQQ: -0.25
+      "^AXJO": -0.25
+      "GC=F": -0.25
+      "HG=F": -0.25
+      "CL=F": -0.25
+      "AUDUSD=X": -0.25
+      "USDJPY=X": -0.25
+      "EURUSD=X": -0.25
+
+  - name: liquidity_freeze
+    type: hypothetical
+    description: "Market liquidity freeze (credit event)"
+    probability: 0.03
+    shocks:
+      SPY: -0.15
+      QQQ: -0.18
+      "^AXJO": -0.15
+      "GC=F": -0.08
+      "HG=F": -0.20
+      "CL=F": -0.20
+      "AUDUSD=X": -0.12
+      "USDJPY=X": -0.10
+      "EURUSD=X": -0.10
+
+  - name: tech_bubble_burst
+    type: hypothetical
+    description: "Technology sector crash"
+    probability: 0.04
+    shocks:
+      SPY: -0.15
+      QQQ: -0.40
+      "^AXJO": -0.12
+      "GC=F": 0.10
+      "HG=F": -0.10
+      "CL=F": -0.05
+      "AUDUSD=X": -0.05
+      "USDJPY=X": 0.08
+      "EURUSD=X": 0.00
+
+  - name: china_slowdown
+    type: hypothetical
+    description: "Chinese economic hard landing"
+    probability: 0.07
+    shocks:
+      SPY: -0.12
+      QQQ: -0.15
+      "^AXJO": -0.18
+      "GC=F": 0.05
+      "HG=F": -0.30
+      "CL=F": -0.25
+      "AUDUSD=X": -0.18
+      "USDJPY=X": 0.05
+      "EURUSD=X": 0.03
+
+# Scenario Groupings for Batch Testing
+scenario_groups:
+  all_historical:
+    - financial_crisis_2008
+    - covid_crash_2020
+    - rate_shock_2022
+    - flash_crash_2010
+
+  equity_crashes:
+    - equity_crash_30
+    - equity_crash_40
+    - tech_bubble_burst
+
+  commodity_shocks:
+    - oil_price_shock_up
+    - oil_price_shock_down
+    - gold_spike
+    - commodity_supercycle
+
+  systemic_risks:
+    - correlation_breakdown
+    - liquidity_freeze
+    - currency_crisis
+
+  high_probability:  # Scenarios with >5% probability
+    - rate_shock_2022
+    - interest_rate_shock_up
+    - oil_price_shock_down
+    - china_slowdown
+    - gold_spike
+
+# Scenario Testing Configuration
+testing:
+  run_frequency: daily
+  include_probability_weighting: true
+  calculate_expected_loss: true
+  generate_reports: true
+  alert_on_extreme_loss: true
+  extreme_loss_threshold: -0.15  # Alert if any scenario loses >15%

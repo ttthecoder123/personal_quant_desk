@@ -1,0 +1,399 @@
+# Alert Rules Configuration
+# Defines when and how alerts are triggered and escalated
+
+# Alert Priority Levels
+priority_levels:
+  critical:
+    response_time_minutes: 5
+    escalate_after_minutes: 10
+    notification_channels: ["email", "sms", "slack"]
+    require_acknowledgment: true
+
+  high:
+    response_time_minutes: 15
+    escalate_after_minutes: 30
+    notification_channels: ["email", "slack"]
+    require_acknowledgment: true
+
+  medium:
+    response_time_minutes: 60
+    escalate_after_minutes: 120
+    notification_channels: ["email"]
+    require_acknowledgment: false
+
+  low:
+    response_time_minutes: 240
+    escalate_after_minutes: null
+    notification_channels: ["slack"]
+    require_acknowledgment: false
+
+# Risk Metric Alerts
+risk_metrics:
+  var_95_breach:
+    priority: high
+    threshold: 1.0  # 100% of limit
+    calculation: ratio
+    description: "Daily VaR (95%) exceeded limit"
+
+  var_99_breach:
+    priority: critical
+    threshold: 1.0
+    calculation: ratio
+    description: "Daily VaR (99%) exceeded limit"
+
+  volatility_spike:
+    priority: high
+    threshold: 2.0  # 2x normal volatility
+    calculation: ratio
+    description: "Volatility spike detected"
+
+  sharpe_degradation:
+    priority: medium
+    threshold: 0.5  # Sharpe < 0.5
+    calculation: absolute
+    description: "Sharpe ratio below acceptable level"
+
+# Drawdown Alerts
+drawdown:
+  drawdown_5pct:
+    priority: low
+    threshold: 0.05
+    calculation: absolute
+    description: "5% drawdown - caution level"
+
+  drawdown_10pct:
+    priority: medium
+    threshold: 0.10
+    calculation: absolute
+    description: "10% drawdown - warning level"
+    action: "Reduce position sizes by 25%"
+
+  drawdown_15pct:
+    priority: high
+    threshold: 0.15
+    calculation: absolute
+    description: "15% drawdown - critical level"
+    action: "Reduce position sizes by 50%"
+
+  drawdown_20pct:
+    priority: critical
+    threshold: 0.20
+    calculation: absolute
+    description: "20% drawdown - emergency level"
+    action: "Stop all new trading"
+
+# Position Alerts
+position:
+  concentration_breach:
+    priority: high
+    threshold: 0.20  # 20% in single position
+    calculation: absolute
+    description: "Position concentration limit exceeded"
+
+  correlation_high:
+    priority: medium
+    threshold: 0.85
+    calculation: absolute
+    description: "Correlation between positions too high"
+
+  leverage_exceeded:
+    priority: critical
+    threshold: 2.0  # 2x leverage
+    calculation: absolute
+    description: "Leverage limit exceeded"
+
+  illiquid_position:
+    priority: medium
+    threshold: 0.50  # Liquidity score < 0.5
+    calculation: threshold
+    description: "Position in illiquid instrument"
+
+# Execution Alerts
+execution:
+  slippage_high:
+    priority: medium
+    threshold: 10  # 10 basis points
+    calculation: absolute
+    description: "Execution slippage exceeded threshold"
+
+  partial_fill:
+    priority: low
+    threshold: 0.90  # < 90% filled
+    calculation: threshold
+    description: "Order partially filled"
+
+  execution_failed:
+    priority: high
+    threshold: 1  # Any failed execution
+    calculation: count
+    description: "Order execution failed"
+
+  market_impact_high:
+    priority: medium
+    threshold: 20  # 20 basis points
+    calculation: absolute
+    description: "Market impact exceeded threshold"
+
+# Model Risk Alerts
+model:
+  prediction_accuracy_low:
+    priority: medium
+    threshold: 0.55  # < 55% accuracy
+    calculation: threshold
+    description: "Model prediction accuracy below threshold"
+
+  concept_drift_detected:
+    priority: high
+    threshold: 0.05  # 5% drift
+    calculation: absolute
+    description: "Model concept drift detected"
+
+  model_disagreement_high:
+    priority: medium
+    threshold: 0.30  # 30% disagreement
+    calculation: absolute
+    description: "High disagreement between ensemble models"
+
+  confidence_low:
+    priority: low
+    threshold: 0.60  # < 60% confidence
+    calculation: threshold
+    description: "Model confidence below threshold"
+
+# Data Quality Alerts
+data:
+  quality_score_low:
+    priority: high
+    threshold: 75  # Quality score < 75
+    calculation: threshold
+    description: "Data quality score below acceptable level"
+
+  data_latency_high:
+    priority: critical
+    threshold: 60  # > 60 seconds
+    calculation: absolute
+    description: "Data latency exceeded threshold"
+
+  missing_data:
+    priority: medium
+    threshold: 0.02  # > 2% missing
+    calculation: absolute
+    description: "Excessive missing data detected"
+
+  data_anomaly:
+    priority: medium
+    threshold: 3.0  # 3 standard deviations
+    calculation: z_score
+    description: "Data anomaly detected"
+
+# System Health Alerts
+system:
+  latency_high:
+    priority: high
+    threshold: 100  # > 100ms
+    calculation: absolute
+    description: "System latency exceeded threshold"
+
+  memory_high:
+    priority: medium
+    threshold: 80  # > 80%
+    calculation: percentage
+    description: "Memory usage high"
+
+  cpu_high:
+    priority: medium
+    threshold: 80  # > 80%
+    calculation: percentage
+    description: "CPU usage high"
+
+  connectivity_lost:
+    priority: critical
+    threshold: 1  # Any connectivity loss
+    calculation: count
+    description: "Data feed connectivity lost"
+
+  backup_system_offline:
+    priority: high
+    threshold: 1
+    calculation: count
+    description: "Backup system offline"
+
+# Stress Test Alerts
+stress_test:
+  scenario_loss_extreme:
+    priority: high
+    threshold: -0.15  # Loss > 15%
+    calculation: absolute
+    description: "Stress test scenario shows extreme loss"
+
+  worst_case_unacceptable:
+    priority: critical
+    threshold: -0.25  # Loss > 25%
+    calculation: absolute
+    description: "Worst case stress test loss unacceptable"
+
+# Circuit Breaker Alerts
+circuit_breaker:
+  level_1_triggered:
+    priority: high
+    threshold: 1
+    calculation: event
+    description: "Circuit breaker level 1 triggered"
+
+  level_2_triggered:
+    priority: critical
+    threshold: 1
+    calculation: event
+    description: "Circuit breaker level 2 triggered"
+
+  level_3_triggered:
+    priority: critical
+    threshold: 1
+    calculation: event
+    description: "Circuit breaker level 3 triggered - trading halted"
+
+# Compliance Alerts
+compliance:
+  limit_breach:
+    priority: critical
+    threshold: 1
+    calculation: event
+    description: "Regulatory limit breached"
+
+  unauthorized_override:
+    priority: critical
+    threshold: 1
+    calculation: event
+    description: "Unauthorized risk override attempted"
+
+  audit_trail_gap:
+    priority: high
+    threshold: 1
+    calculation: event
+    description: "Gap in audit trail detected"
+
+# Alert Deduplication
+deduplication:
+  enabled: true
+  window_minutes: 30  # Deduplicate within 30 minutes
+  max_similar_alerts: 3  # Max 3 similar alerts in window
+
+  grouping_keys:
+    - alert_type
+    - symbol
+    - severity
+
+# Alert Escalation
+escalation:
+  enabled: true
+  levels:
+    1:
+      notify: ["ops@example.com"]
+      after_minutes: 15
+    2:
+      notify: ["ops@example.com", "risk@example.com"]
+      after_minutes: 30
+    3:
+      notify: ["ops@example.com", "risk@example.com", "management@example.com"]
+      after_minutes: 60
+
+# Alert Batching
+batching:
+  enabled: true
+  batch_window_minutes: 5
+  max_batch_size: 10
+  priority_exemptions: ["critical"]  # Don't batch critical alerts
+
+# Notification Rate Limiting
+rate_limiting:
+  enabled: true
+  max_per_hour: 100
+  max_per_day: 500
+  burst_size: 10
+  priority_exemptions: ["critical"]
+
+# Alert Suppression (for maintenance windows)
+suppression:
+  enabled: false
+  suppress_types: []
+  suppress_symbols: []
+  start_time: null
+  end_time: null
+
+# Alert History
+history:
+  retention_days: 90
+  archive_after_days: 30
+  include_acknowledged: true
+  include_resolved: true
+
+# Notification Templates
+templates:
+  critical:
+    subject: "[CRITICAL] {alert_type}: {description}"
+    body: |
+      CRITICAL ALERT
+
+      Alert Type: {alert_type}
+      Description: {description}
+      Timestamp: {timestamp}
+      Value: {value}
+      Threshold: {threshold}
+
+      Action Required: {action}
+
+      Please acknowledge immediately.
+
+  high:
+    subject: "[HIGH] {alert_type}: {description}"
+    body: |
+      HIGH PRIORITY ALERT
+
+      Alert Type: {alert_type}
+      Description: {description}
+      Timestamp: {timestamp}
+      Value: {value}
+      Threshold: {threshold}
+
+      {additional_info}
+
+  medium:
+    subject: "[MEDIUM] {alert_type}: {description}"
+    body: |
+      Alert: {alert_type}
+      {description}
+
+      Value: {value}
+      Threshold: {threshold}
+      Time: {timestamp}
+
+  low:
+    subject: "[INFO] {alert_type}"
+    body: |
+      Info: {description}
+      Value: {value}
+      Time: {timestamp}
+
+# Integration Settings
+integrations:
+  slack:
+    enabled: false
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#trading-alerts"
+    username: "Risk Bot"
+
+  email:
+    enabled: true
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    from_address: "alerts@example.com"
+
+  sms:
+    enabled: false
+    provider: "twilio"
+    from_number: "${TWILIO_FROM_NUMBER}"
+
+  pagerduty:
+    enabled: false
+    integration_key: "${PAGERDUTY_KEY}"

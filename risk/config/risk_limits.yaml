@@ -1,0 +1,186 @@
+# Risk Management Limits Configuration
+# Comprehensive risk limits for Personal Quant Desk
+
+# Portfolio-Level Limits
+portfolio:
+  max_var_95: 0.02              # 2% daily VaR limit (95% confidence)
+  max_var_99: 0.03              # 3% daily VaR limit (99% confidence)
+  max_drawdown: 0.20            # 20% maximum drawdown
+  target_volatility: 0.20       # 20% annual volatility target
+  max_leverage: 2.0             # 2x maximum leverage
+  min_cash_buffer: 0.05         # 5% minimum cash reserve
+
+# Position-Level Limits
+position:
+  max_position_size: 0.02       # 2% risk per position
+  max_concentration: 0.20       # 20% max per instrument
+  max_sector_concentration: 0.40  # 40% max per sector
+  min_position_size: 0.001      # 0.1% minimum position size
+
+# Correlation Limits
+correlation:
+  max_correlation: 0.85         # Maximum correlation between positions
+  min_effective_bets: 3         # Minimum diversification
+  correlation_lookback: 60      # Days for correlation calculation
+  correlation_threshold_alert: 0.75  # Alert threshold
+
+# Volatility Management
+volatility:
+  ewma_halflife: 25            # Days for EWMA volatility
+  vol_spike_threshold: 2.0     # Multiplier for vol spike detection
+  vol_regime_percentiles:
+    low: 0.33                  # Below 33rd percentile = low vol
+    high: 0.67                 # Above 67th percentile = high vol
+
+# Drawdown Controls
+drawdown:
+  warning_levels:
+    caution: 0.05              # 5% drawdown - warning
+    warning: 0.10              # 10% drawdown - reduce 25%
+    critical: 0.15             # 15% drawdown - reduce 50%
+    emergency: 0.20            # 20% drawdown - stop trading
+
+  recovery_phases:
+    phase_1_recovery: 0.10     # 10% profit recovery required
+    phase_2_recovery: 0.30     # 30% profit recovery required
+    phase_3_recovery: 0.60     # 60% profit recovery required
+    phase_4_recovery: 0.90     # 90% profit recovery required
+
+# Execution Risk Limits
+execution:
+  max_slippage_bps: 10         # 10 basis points max slippage
+  max_daily_turnover: 0.50     # 50% max daily turnover
+  max_market_impact_bps: 20    # 20 bps max market impact
+  partial_fill_threshold: 0.90  # 90% fill rate required
+
+# Circuit Breakers
+circuit_breakers:
+  level_1:
+    daily_loss_pct: 0.03       # 3% daily loss
+    rapid_loss_pct: 0.01       # 1% loss in 5 minutes
+    halt_duration_minutes: 15
+
+  level_2:
+    daily_loss_pct: 0.05       # 5% daily loss
+    rapid_loss_pct: 0.02       # 2% loss in 5 minutes
+    halt_duration_minutes: 60
+
+  level_3:
+    daily_loss_pct: 0.07       # 7% daily loss
+    rapid_loss_pct: 0.03       # 3% loss in 5 minutes
+    halt_duration_hours: 24    # Trading halted for day
+
+# Liquidity Requirements
+liquidity:
+  min_liquidity_score: 0.50    # Minimum liquidity score (0-1)
+  max_volume_participation: 0.10  # 10% max of daily volume
+  min_daily_volume_usd: 1000000   # $1M minimum daily volume
+
+# Model Risk Limits
+model:
+  max_prediction_error: 0.05   # 5% max prediction error
+  min_confidence: 0.60         # 60% minimum model confidence
+  concept_drift_threshold: 0.05  # 5% drift threshold
+  min_accuracy: 0.55           # 55% minimum hit rate
+
+# Data Quality Requirements
+data:
+  min_quality_score: 75        # Minimum quality score (0-100)
+  max_data_latency_seconds: 60  # 60 seconds max latency
+  max_missing_data_pct: 0.02   # 2% max missing data
+  min_uptime_pct: 0.99         # 99% minimum uptime
+
+# System Health Limits
+system:
+  max_latency_ms: 100          # 100ms max execution latency
+  max_memory_pct: 80           # 80% max memory usage
+  max_cpu_pct: 80              # 80% max CPU usage
+  max_reconnect_attempts: 5    # Max connection retry attempts
+
+# Strategy-Specific Limits
+strategies:
+  mean_reversion:
+    max_allocation: 0.30       # 30% max allocation
+    max_holding_period_days: 20
+
+  momentum:
+    max_allocation: 0.30       # 30% max allocation
+    min_trend_strength: 0.60
+
+  volatility:
+    max_allocation: 0.25       # 25% max allocation
+    max_gamma_exposure: 0.10
+
+  hybrid:
+    max_allocation: 0.35       # 35% max allocation
+    min_ml_confidence: 0.65
+
+# Position Sizing Parameters
+position_sizing:
+  kelly_fraction: 0.25         # Quarter Kelly
+  max_kelly: 0.50              # 50% max Kelly
+  min_win_rate: 0.40           # 40% minimum win rate required
+
+  volatility_targeting:
+    target_annual_vol: 0.20    # 20% annual volatility
+    inertia_threshold: 0.10    # 10% change to trigger rebalance
+
+  risk_parity:
+    concentration_threshold: 0.25  # 25% max single strategy risk
+
+# Stress Testing Scenarios
+stress_test:
+  enabled: true
+  frequency_hours: 24          # Run every 24 hours
+  confidence_levels: [0.95, 0.99, 0.999]
+  scenarios:
+    - financial_crisis_2008
+    - covid_crash_2020
+    - rate_shock_2022
+    - equity_crash_30
+    - correlation_breakdown
+
+# Alert Thresholds
+alerts:
+  var_breach_threshold: 1.0    # Alert at 100% of VaR limit
+  drawdown_alert_pct: 0.05     # Alert at 5% drawdown
+  correlation_alert: 0.80      # Alert at 80% correlation
+  volatility_spike_alert: 2.0  # Alert at 2x normal vol
+
+  escalation:
+    time_to_escalate_minutes: 15  # Escalate unacknowledged alerts
+    max_escalation_level: 3
+
+# Reporting Configuration
+reporting:
+  daily_report_time: "17:00"   # 5 PM daily report
+  weekly_report_day: "Friday"
+  monthly_report_day: 1        # First of month
+
+  email_recipients:
+    critical: ["risk@example.com"]
+    daily: ["ops@example.com"]
+
+  include_sections:
+    - risk_metrics
+    - var_analysis
+    - stress_tests
+    - position_breakdown
+    - compliance_status
+
+# Compliance Settings
+compliance:
+  audit_retention_days: 1825   # 5 years
+  log_all_overrides: true
+  require_dual_approval: false  # For manual overrides
+
+  regulatory_limits:
+    max_single_issuer: 0.10    # 10% max single issuer
+    max_illiquid_assets: 0.20  # 20% max illiquid positions
+
+# Emergency Protocols
+emergency:
+  enable_kill_switch: true     # Allow emergency flatten
+  require_password: true       # Require authentication
+  auto_flatten_on_critical: false  # Don't auto-flatten
+  notification_channels: ["email", "sms"]
