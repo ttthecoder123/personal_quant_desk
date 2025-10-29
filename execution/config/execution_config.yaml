@@ -1,0 +1,169 @@
+# Execution System Configuration
+
+# Order Management
+order_management:
+  default_time_in_force: "DAY"
+  allow_fractional_shares: false
+  enable_pre_market: false
+  enable_after_hours: false
+  max_orders_per_second: 10
+  order_timeout_seconds: 300
+
+# Order Validation
+validation:
+  enabled: true
+  max_order_value: 1000000
+  max_position_size: 10000
+  max_daily_trades: 100
+  max_leverage: 4.0
+  min_order_value: 1.0
+  pdt_enabled: true
+  pdt_threshold: 25000
+  allow_margin: true
+
+# Order Routing
+routing:
+  default_broker: "paper_trading"
+  cost_optimization_enabled: true
+  latency_optimization_enabled: false
+  smart_routing_enabled: true
+
+  # Custom routing rules
+  routing_rules:
+    large_orders:
+      symbols: []
+      min_quantity: 10000
+      broker: "interactive_brokers"
+      reason: "Large order routing"
+
+    crypto:
+      asset_class: "CRYPTO"
+      broker: "alpaca"
+      reason: "Crypto specialist"
+
+# Execution Algorithms
+algorithms:
+  twap:
+    enabled: true
+    default_num_slices: 10
+    randomize_intervals: true
+    max_participation: 0.10
+    min_slice_size: 1.0
+
+  vwap:
+    enabled: true
+    max_participation: 0.10
+    aggressive_on_close: true
+    use_dark_pools: true
+    min_fill_size: 1.0
+
+  implementation_shortfall:
+    enabled: true
+    risk_aversion: 1.0
+    permanent_impact_factor: 0.1
+    temporary_impact_factor: 0.01
+
+  adaptive:
+    enabled: false
+    learning_rate: 0.01
+    model_path: "models/adaptive_execution.pkl"
+
+# Pre-trade Analytics
+pre_trade:
+  cost_estimation_enabled: true
+  impact_modeling_enabled: true
+  min_confidence_threshold: 0.7
+
+  # Market impact models
+  impact_models:
+    default_model: "square_root"
+    square_root:
+      volatility_factor: 0.02
+      participation_exponent: 0.5
+
+    linear:
+      slope_factor: 0.001
+
+# Post-trade Analytics
+post_trade:
+  tca_enabled: true
+  auto_generate_reports: true
+  benchmark: "ARRIVAL"  # ARRIVAL, VWAP, TWAP, CLOSE
+  outlier_threshold_bps: 50
+
+  # TCA Parameters
+  tca:
+    min_fills_for_analysis: 1
+    confidence_level: 0.95
+    save_reports: true
+    report_path: "reports/tca/"
+
+# Monitoring
+monitoring:
+  real_time_enabled: true
+  dashboard_enabled: true
+  metrics_update_interval_seconds: 5
+  stuck_order_threshold_minutes: 30
+  partial_fill_threshold_minutes: 15
+
+# Alerts
+alerts:
+  enabled: true
+  email_alerts: false
+  slack_alerts: false
+  log_alerts: true
+
+  alert_thresholds:
+    max_slippage_bps: 50
+    max_order_age_minutes: 60
+    max_consecutive_rejections: 5
+    max_latency_ms: 1000
+
+# State Management
+state_management:
+  position_reconciliation_interval_minutes: 15
+  order_book_cleanup_interval_hours: 24
+  audit_trail_retention_days: 90
+  cache_size_mb: 512
+  enable_persistent_storage: true
+  storage_path: "data/execution_state/"
+
+# Performance Optimization
+performance:
+  enable_order_batching: true
+  batch_window_ms: 100
+  max_batch_size: 50
+  enable_async_processing: true
+  thread_pool_size: 10
+  connection_pool_size: 5
+
+# Risk Controls
+risk_controls:
+  max_daily_loss: 10000
+  max_position_concentration: 0.25
+  max_symbol_exposure: 50000
+  enable_kill_switch: true
+  kill_switch_loss_threshold: 20000
+  enable_circuit_breakers: true
+
+# Market Hours (US Eastern Time)
+market_hours:
+  regular:
+    open: "09:30"
+    close: "16:00"
+  pre_market:
+    open: "04:00"
+    close: "09:30"
+  after_hours:
+    open: "16:00"
+    close: "20:00"
+  trading_days: ["MON", "TUE", "WED", "THU", "FRI"]
+
+# Logging
+logging:
+  level: "INFO"
+  file_path: "logs/execution.log"
+  max_file_size_mb: 100
+  backup_count: 10
+  log_to_console: true
+  log_to_file: true
