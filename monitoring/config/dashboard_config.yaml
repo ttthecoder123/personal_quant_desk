@@ -1,0 +1,483 @@
+# Dashboard Configuration
+# Dashboard layouts, widgets, and display settings
+
+dashboards:
+  # System Overview Dashboard
+  system_dashboard:
+    name: System Overview
+    description: High-level system health and performance
+    refresh_interval_seconds: 5
+    layout: grid
+    columns: 3
+    widgets:
+      - id: system_health
+        type: status_grid
+        title: System Health
+        position: [0, 0]
+        size: [3, 1]
+        data_source: system.health_status
+        display:
+          show_icons: true
+          color_code: true
+
+      - id: cpu_gauge
+        type: gauge
+        title: CPU Usage
+        position: [0, 1]
+        size: [1, 1]
+        data_source: system.cpu_percent
+        thresholds:
+          warning: 75
+          critical: 90
+        unit: "%"
+
+      - id: memory_gauge
+        type: gauge
+        title: Memory Usage
+        position: [1, 1]
+        size: [1, 1]
+        data_source: system.memory_percent
+        thresholds:
+          warning: 80
+          critical: 90
+        unit: "%"
+
+      - id: disk_gauge
+        type: gauge
+        title: Disk Usage
+        position: [2, 1]
+        size: [1, 1]
+        data_source: system.disk_percent
+        thresholds:
+          warning: 80
+          critical: 95
+        unit: "%"
+
+      - id: network_chart
+        type: line_chart
+        title: Network I/O
+        position: [0, 2]
+        size: [3, 2]
+        data_source: system.network_io
+        time_window: 5m
+        metrics:
+          - name: Sent (MB/s)
+            color: "#3498db"
+          - name: Received (MB/s)
+            color: "#2ecc71"
+
+      - id: active_alerts
+        type: alert_list
+        title: Active Alerts
+        position: [0, 4]
+        size: [3, 2]
+        data_source: alerts.active
+        max_items: 10
+        filters:
+          severity: [critical, high]
+
+  # Trading Dashboard
+  trading_dashboard:
+    name: Trading Operations
+    description: Real-time trading activity and performance
+    refresh_interval_seconds: 1
+    layout: grid
+    columns: 4
+    widgets:
+      - id: pnl_summary
+        type: metric_cards
+        title: P&L Summary
+        position: [0, 0]
+        size: [4, 1]
+        data_source: trading.pnl
+        metrics:
+          - name: Today P&L
+            format: currency
+            color_positive: green
+            color_negative: red
+          - name: Week P&L
+            format: currency
+          - name: Month P&L
+            format: currency
+          - name: YTD P&L
+            format: currency
+
+      - id: pnl_chart
+        type: area_chart
+        title: Intraday P&L
+        position: [0, 1]
+        size: [2, 2]
+        data_source: trading.intraday_pnl
+        time_window: 1d
+        refresh_interval: 5s
+
+      - id: position_summary
+        type: table
+        title: Current Positions
+        position: [2, 1]
+        size: [2, 2]
+        data_source: trading.positions
+        columns:
+          - Symbol
+          - Quantity
+          - Entry Price
+          - Current Price
+          - Unrealized P&L
+          - % of Portfolio
+
+      - id: execution_metrics
+        type: metric_grid
+        title: Execution Quality
+        position: [0, 3]
+        size: [2, 2]
+        data_source: trading.execution
+        metrics:
+          - name: Fill Rate
+            format: percent
+            threshold: 95
+          - name: Avg Slippage
+            format: bps
+            threshold: 5
+          - name: Order Latency
+            format: milliseconds
+            threshold: 100
+          - name: Rejection Rate
+            format: percent
+            threshold: 5
+
+      - id: strategy_performance
+        type: bar_chart
+        title: Strategy Performance
+        position: [2, 3]
+        size: [2, 2]
+        data_source: trading.strategy_returns
+        time_window: 1d
+
+      - id: order_book
+        type: order_blotter
+        title: Recent Orders
+        position: [0, 5]
+        size: [4, 2]
+        data_source: trading.orders
+        max_items: 20
+        auto_scroll: true
+
+  # Risk Dashboard
+  risk_dashboard:
+    name: Risk Management
+    description: Risk metrics and limit monitoring
+    refresh_interval_seconds: 10
+    layout: grid
+    columns: 3
+    widgets:
+      - id: risk_summary
+        type: status_cards
+        title: Risk Overview
+        position: [0, 0]
+        size: [3, 1]
+        data_source: risk.summary
+        metrics:
+          - name: VaR Utilization
+            format: percent
+            icon: shield
+          - name: Position Concentration
+            format: percent
+            icon: pie-chart
+          - name: Leverage
+            format: ratio
+            icon: trending-up
+
+      - id: var_gauge
+        type: gauge
+        title: VaR (95%)
+        position: [0, 1]
+        size: [1, 2]
+        data_source: risk.var_95
+        max_value: risk.var_limit
+        thresholds:
+          warning: 0.8
+          critical: 0.9
+        display_limit: true
+
+      - id: exposure_breakdown
+        type: pie_chart
+        title: Exposure by Sector
+        position: [1, 1]
+        size: [1, 2]
+        data_source: risk.sector_exposure
+
+      - id: correlation_matrix
+        type: heatmap
+        title: Asset Correlation
+        position: [2, 1]
+        size: [1, 2]
+        data_source: risk.correlation_matrix
+        color_scheme: RdYlGn_r
+
+      - id: drawdown_chart
+        type: line_chart
+        title: Drawdown Analysis
+        position: [0, 3]
+        size: [3, 2]
+        data_source: risk.drawdown_series
+        time_window: 30d
+        show_max_drawdown: true
+
+      - id: stress_test_results
+        type: scenario_table
+        title: Stress Test Results
+        position: [0, 5]
+        size: [3, 2]
+        data_source: risk.stress_tests
+        scenarios:
+          - Market Crash (-10%)
+          - Rate Spike (+100bps)
+          - Volatility Surge (VIX +50%)
+          - Liquidity Crisis
+
+  # Performance Dashboard
+  performance_dashboard:
+    name: Performance Analytics
+    description: Detailed performance metrics and analytics
+    refresh_interval_seconds: 60
+    layout: grid
+    columns: 3
+    widgets:
+      - id: performance_summary
+        type: metric_cards
+        title: Performance Metrics
+        position: [0, 0]
+        size: [3, 1]
+        data_source: performance.summary
+        metrics:
+          - name: Sharpe Ratio
+            format: decimal2
+          - name: Sortino Ratio
+            format: decimal2
+          - name: Max Drawdown
+            format: percent
+          - name: Win Rate
+            format: percent
+
+      - id: returns_chart
+        type: line_chart
+        title: Cumulative Returns
+        position: [0, 1]
+        size: [2, 2]
+        data_source: performance.cumulative_returns
+        time_window: 90d
+        compare_to: benchmark
+
+      - id: monthly_returns
+        type: heatmap_calendar
+        title: Monthly Returns
+        position: [2, 1]
+        size: [1, 2]
+        data_source: performance.monthly_returns
+        color_scheme: RdYlGn
+
+      - id: return_distribution
+        type: histogram
+        title: Daily Return Distribution
+        position: [0, 3]
+        size: [2, 2]
+        data_source: performance.daily_returns
+        bins: 50
+        show_normal_curve: true
+
+      - id: factor_exposure
+        type: bar_chart
+        title: Factor Exposures
+        position: [2, 3]
+        size: [1, 2]
+        data_source: performance.factor_exposures
+        factors:
+          - Market Beta
+          - Size
+          - Value
+          - Momentum
+          - Volatility
+
+      - id: attribution_table
+        type: table
+        title: Return Attribution
+        position: [0, 5]
+        size: [3, 2]
+        data_source: performance.attribution
+        columns:
+          - Strategy
+          - Return
+          - Contribution
+          - % of Total
+        sort_by: Contribution
+
+  # Executive Dashboard
+  executive_dashboard:
+    name: Executive Summary
+    description: High-level overview for executives
+    refresh_interval_seconds: 30
+    layout: grid
+    columns: 2
+    widgets:
+      - id: kpi_summary
+        type: large_metric_cards
+        title: Key Performance Indicators
+        position: [0, 0]
+        size: [2, 2]
+        data_source: executive.kpis
+        metrics:
+          - name: Total AUM
+            format: currency_millions
+            trend: true
+          - name: Today's P&L
+            format: currency
+            trend: true
+            color_code: true
+          - name: MTD Return
+            format: percent2
+            trend: true
+          - name: YTD Return
+            format: percent2
+            trend: true
+
+      - id: health_indicator
+        type: traffic_light
+        title: System Health
+        position: [0, 2]
+        size: [1, 1]
+        data_source: executive.system_health
+        states:
+          green: All Systems Operational
+          yellow: Degraded Performance
+          red: Critical Issues
+
+      - id: risk_indicator
+        type: traffic_light
+        title: Risk Status
+        position: [1, 2]
+        size: [1, 1]
+        data_source: executive.risk_status
+        states:
+          green: Within Limits
+          yellow: Approaching Limits
+          red: Limit Breach
+
+      - id: performance_vs_benchmark
+        type: comparison_chart
+        title: Performance vs Benchmark (YTD)
+        position: [0, 3]
+        size: [2, 2]
+        data_source: executive.performance_comparison
+        compare:
+          - Strategy
+          - S&P 500
+          - Risk-Free Rate
+
+      - id: top_positions
+        type: table
+        title: Top 10 Positions
+        position: [0, 5]
+        size: [1, 2]
+        data_source: executive.top_positions
+        columns:
+          - Symbol
+          - Value
+          - % of Portfolio
+
+      - id: recent_alerts
+        type: alert_timeline
+        title: Recent Critical Events
+        position: [1, 5]
+        size: [1, 2]
+        data_source: executive.critical_alerts
+        max_items: 5
+        filter_severity: [critical]
+
+# Dashboard Server Settings
+server:
+  host: 0.0.0.0
+  port: 8080
+  enable_ssl: false
+  ssl_cert: /path/to/cert.pem
+  ssl_key: /path/to/key.pem
+
+  # Authentication
+  authentication:
+    enabled: true
+    type: jwt  # jwt, basic, oauth
+    secret_key: ${DASHBOARD_SECRET_KEY}
+    token_expiry_hours: 24
+
+  # Authorization
+  authorization:
+    enabled: true
+    roles:
+      admin:
+        dashboards: [system, trading, risk, performance, executive]
+        actions: [view, edit, create, delete]
+
+      trader:
+        dashboards: [trading, risk, performance]
+        actions: [view]
+
+      risk_manager:
+        dashboards: [risk, trading, executive]
+        actions: [view]
+
+      executive:
+        dashboards: [executive, performance]
+        actions: [view]
+
+  # CORS settings
+  cors:
+    enabled: true
+    allowed_origins:
+      - http://localhost:3000
+      - https://dashboard.example.com
+
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+
+# Display Settings
+display:
+  theme: dark  # dark, light, auto
+  color_scheme:
+    positive: "#2ecc71"
+    negative: "#e74c3c"
+    warning: "#f39c12"
+    info: "#3498db"
+    neutral: "#95a5a6"
+
+  chart_defaults:
+    font_family: "Arial, sans-serif"
+    font_size: 12
+    line_width: 2
+    point_size: 4
+
+  formatting:
+    currency_symbol: "$"
+    currency_decimals: 2
+    percent_decimals: 2
+    number_decimals: 2
+    large_number_format: abbreviated  # abbreviated, full
+
+  time_formatting:
+    timezone: America/New_York
+    date_format: "YYYY-MM-DD"
+    time_format: "HH:mm:ss"
+    datetime_format: "YYYY-MM-DD HH:mm:ss"
+
+# Export Settings
+export:
+  enabled: true
+  formats: [png, pdf, csv, excel]
+  max_export_size_mb: 50
+
+# Real-time Updates
+realtime:
+  enabled: true
+  protocol: websocket  # websocket, polling
+  polling_interval_seconds: 5
+  max_connections: 100

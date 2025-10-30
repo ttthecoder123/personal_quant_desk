@@ -1,0 +1,147 @@
+# Monitoring Configuration
+# Comprehensive monitoring settings for Personal Quant Desk
+
+monitoring:
+  # Check intervals (seconds)
+  intervals:
+    system_health: 10
+    performance_metrics: 30
+    resource_usage: 60
+    network_check: 30
+    process_check: 15
+    dependency_check: 30
+    feed_check: 1
+    data_quality: 60
+    trading_metrics: 5
+
+  # Data retention periods
+  retention:
+    metrics: 90d
+    logs: 30d
+    alerts: 180d
+    performance_data: 60d
+    audit_logs: 365d
+
+  # System thresholds
+  thresholds:
+    cpu:
+      warning: 75
+      critical: 90
+    memory:
+      warning: 80
+      critical: 90
+    disk:
+      warning: 80
+      critical: 95
+    network_latency:
+      warning_ms: 100
+      critical_ms: 500
+
+  # Performance thresholds
+  performance:
+    api_latency:
+      p95_warning_ms: 200
+      p95_critical_ms: 1000
+      p99_warning_ms: 500
+      p99_critical_ms: 2000
+    database_query:
+      warning_ms: 100
+      critical_ms: 1000
+    cache_hit_rate:
+      warning_percent: 80
+      critical_percent: 50
+
+  # Data monitoring
+  data:
+    feed_timeout_seconds: 60
+    gap_threshold: 5
+    latency_warning_ms: 50
+    latency_critical_ms: 200
+    completeness_threshold_percent: 95
+    quality_score_warning: 80
+    quality_score_critical: 60
+
+  # Trading monitoring
+  trading:
+    position_check_interval: 5
+    pnl_update_interval: 1
+    execution_latency_warning_ms: 100
+    execution_latency_critical_ms: 500
+    fill_rate_warning_percent: 90
+    slippage_warning_bps: 5
+    slippage_critical_bps: 20
+
+  # Alert settings
+  alerts:
+    enable_email: true
+    enable_slack: true
+    enable_pagerduty: false
+    enable_sms: false
+    batch_interval_seconds: 60
+    max_alerts_per_minute: 10
+    suppress_duplicate_minutes: 5
+
+  # Logging settings
+  logging:
+    level: INFO
+    format: json
+    enable_console: true
+    enable_file: true
+    file_path: /var/log/personal_quant_desk/monitoring.log
+    max_file_size_mb: 100
+    backup_count: 10
+
+  # Dashboard settings
+  dashboards:
+    refresh_interval_seconds: 5
+    enable_real_time: true
+    port: 8080
+    host: 0.0.0.0
+
+  # Metrics collection
+  metrics:
+    enable_prometheus: true
+    enable_influxdb: false
+    enable_datadog: false
+    prometheus_port: 9090
+    collection_interval_seconds: 15
+
+  # Health checks
+  health_checks:
+    enable: true
+    endpoint: /health
+    detailed_endpoint: /health/detailed
+    timeout_seconds: 5
+
+  # Maintenance windows
+  maintenance:
+    enabled: false
+    schedule: []  # Cron expressions
+    suppress_alerts_during_maintenance: true
+
+  # Backup settings
+  backup:
+    enabled: true
+    interval_hours: 24
+    retention_days: 30
+    backup_path: /var/backups/personal_quant_desk
+
+  # Integration settings
+  integrations:
+    slack:
+      webhook_url: ${SLACK_WEBHOOK_URL}
+      channel: #trading-alerts
+      username: MonitoringBot
+    pagerduty:
+      integration_key: ${PAGERDUTY_KEY}
+      service_id: ${PAGERDUTY_SERVICE_ID}
+    email:
+      smtp_host: smtp.gmail.com
+      smtp_port: 587
+      from_address: monitoring@example.com
+      to_addresses:
+        - admin@example.com
+    datadog:
+      api_key: ${DATADOG_API_KEY}
+      app_key: ${DATADOG_APP_KEY}
+      site: datadoghq.com

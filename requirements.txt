@@ -136,3 +136,20 @@ quickfix>=1.15.1    # FIX protocol
 arctic>=1.79.4      # Tick data storage (requires MongoDB)
 websocket-client>=1.6.4  # WebSocket for real-time feeds
 websockets>=12.0    # Async WebSocket support
+
+# Monitoring & Operations Infrastructure (Step 9)
+prometheus-client>=0.17.0    # Prometheus metrics
+influxdb-client>=1.36.0      # Time series database
+grafana-api>=1.0.3           # Grafana integration
+datadog>=0.47.0              # Datadog monitoring (optional)
+sentry-sdk>=1.32.0           # Error tracking
+elastic-apm>=6.18.0          # APM monitoring (optional)
+structlog>=23.1.0            # Structured logging
+psutil>=5.9.0                # System resource monitoring
+py-cpuinfo>=9.0.0            # CPU information
+gputil>=1.4.0                # GPU monitoring (optional)
+flask>=3.0.0                 # Dashboard web server
+flask-cors>=4.0.0            # CORS support
+flask-socketio>=5.3.0        # WebSocket support for dashboards
+eventlet>=0.33.0             # Async support for Flask
+gunicorn>=21.2.0             # Production WSGI server

@@ -1,0 +1,357 @@
+# Alert Configuration
+# Alert rules, priorities, routing, and escalation policies
+
+alert_rules:
+  # Critical Alerts - Immediate attention required
+  critical:
+    - name: system_down
+      description: Trading system is completely down
+      condition: system.status == 'down'
+      channels: [email, slack, pagerduty, sms]
+      escalate_after_minutes: 5
+      auto_escalate: true
+
+    - name: major_loss
+      description: Major trading loss detected
+      condition: pnl.drawdown_percent > 10
+      channels: [email, slack, pagerduty, phone]
+      escalate_after_minutes: 2
+      auto_escalate: true
+
+    - name: risk_breach_critical
+      description: Critical risk limit breached
+      condition: risk.var > risk.var_limit * 1.2
+      channels: [email, slack, pagerduty]
+      escalate_after_minutes: 3
+      auto_escalate: true
+
+    - name: data_feed_failure
+      description: All primary data feeds failed
+      condition: feeds.active_count == 0
+      channels: [email, slack, pagerduty]
+      escalate_after_minutes: 5
+      auto_escalate: true
+
+    - name: execution_failure
+      description: Order execution system failure
+      condition: execution.rejection_rate > 50
+      channels: [email, slack, pagerduty]
+      escalate_after_minutes: 5
+      auto_escalate: true
+
+    - name: database_connection_lost
+      description: Database connection lost
+      condition: database.status == 'disconnected'
+      channels: [email, slack, pagerduty]
+      escalate_after_minutes: 3
+      auto_escalate: true
+
+  # High Priority Alerts - Urgent but not immediately critical
+  high:
+    - name: risk_breach_warning
+      description: Risk limit warning threshold breached
+      condition: risk.var > risk.var_limit * 0.9
+      channels: [email, slack]
+      escalate_after_minutes: 15
+      auto_escalate: false
+
+    - name: execution_degraded
+      description: Execution performance degraded
+      condition: execution.fill_rate < 90 OR execution.slippage_bps > 10
+      channels: [email, slack]
+      escalate_after_minutes: 10
+      auto_escalate: false
+
+    - name: high_cpu_usage
+      description: CPU usage critically high
+      condition: system.cpu_percent > 90
+      channels: [slack, email]
+      escalate_after_minutes: 20
+      auto_escalate: false
+
+    - name: high_memory_usage
+      description: Memory usage critically high
+      condition: system.memory_percent > 90
+      channels: [slack, email]
+      escalate_after_minutes: 20
+      auto_escalate: false
+
+    - name: feed_degraded
+      description: Data feed quality degraded
+      condition: feed.quality_score < 70
+      channels: [slack, email]
+      escalate_after_minutes: 15
+      auto_escalate: false
+
+    - name: position_limit_warning
+      description: Position limit approaching
+      condition: position.utilization_percent > 90
+      channels: [slack, email]
+      escalate_after_minutes: 30
+      auto_escalate: false
+
+  # Medium Priority Alerts - Important but not urgent
+  medium:
+    - name: performance_degradation
+      description: System performance degraded
+      condition: performance.p95_latency_ms > 500
+      channels: [slack]
+      escalate_after_minutes: 30
+      auto_escalate: false
+
+    - name: cache_miss_rate_high
+      description: Cache hit rate too low
+      condition: cache.hit_rate < 70
+      channels: [slack]
+      escalate_after_minutes: 60
+      auto_escalate: false
+
+    - name: disk_space_warning
+      description: Disk space running low
+      condition: disk.usage_percent > 80
+      channels: [slack, email]
+      escalate_after_minutes: 120
+      auto_escalate: false
+
+    - name: data_quality_warning
+      description: Data quality issues detected
+      condition: data.quality_score < 85
+      channels: [slack]
+      escalate_after_minutes: 30
+      auto_escalate: false
+
+    - name: strategy_underperforming
+      description: Strategy performance below expectations
+      condition: strategy.sharpe_ratio < 1.0
+      channels: [slack]
+      escalate_after_minutes: 60
+      auto_escalate: false
+
+    - name: ssl_certificate_expiring
+      description: SSL certificate expiring soon
+      condition: ssl.days_until_expiry < 30
+      channels: [slack, email]
+      escalate_after_minutes: 1440  # 24 hours
+      auto_escalate: false
+
+  # Low Priority Alerts - Informational
+  low:
+    - name: scheduled_maintenance
+      description: Scheduled maintenance reminder
+      condition: maintenance.upcoming
+      channels: [slack]
+      escalate_after_minutes: null
+      auto_escalate: false
+
+    - name: backup_completed
+      description: Backup completed successfully
+      condition: backup.status == 'completed'
+      channels: [slack]
+      escalate_after_minutes: null
+      auto_escalate: false
+
+    - name: daily_summary
+      description: Daily trading summary
+      condition: time.hour == 17 AND time.minute == 0
+      channels: [email, slack]
+      escalate_after_minutes: null
+      auto_escalate: false
+
+# Alert Routing Rules
+routing:
+  # Route alerts based on time of day
+  time_based:
+    business_hours:
+      days: [monday, tuesday, wednesday, thursday, friday]
+      start_time: "09:00"
+      end_time: "17:00"
+      timezone: America/New_York
+      channels: [email, slack]
+
+    after_hours:
+      channels: [pagerduty, sms]
+
+    weekends:
+      days: [saturday, sunday]
+      channels: [pagerduty]
+
+  # Route alerts based on severity
+  severity_based:
+    critical:
+      primary: [pagerduty, sms, email]
+      backup: [phone]
+    high:
+      primary: [email, slack]
+      backup: [sms]
+    medium:
+      primary: [slack]
+      backup: [email]
+    low:
+      primary: [slack]
+
+  # Role-based routing
+  role_based:
+    trader:
+      alerts: [major_loss, execution_failure, position_limit_warning]
+      contacts:
+        email: [trader@example.com]
+        slack: [@trader]
+        phone: ["+1234567890"]
+
+    developer:
+      alerts: [system_down, performance_degradation, database_connection_lost]
+      contacts:
+        email: [dev@example.com]
+        slack: [@developer]
+        pagerduty: [dev_oncall]
+
+    risk_manager:
+      alerts: [risk_breach_critical, risk_breach_warning, position_limit_warning]
+      contacts:
+        email: [risk@example.com]
+        slack: [@risk_manager]
+        phone: ["+1234567891"]
+
+    operations:
+      alerts: [feed_degraded, data_feed_failure, scheduled_maintenance]
+      contacts:
+        email: [ops@example.com]
+        slack: [@operations]
+
+# Escalation Policies
+escalation:
+  default_policy:
+    - level: 1
+      delay_minutes: 0
+      contacts: [on_call_primary]
+
+    - level: 2
+      delay_minutes: 10
+      contacts: [on_call_secondary]
+
+    - level: 3
+      delay_minutes: 20
+      contacts: [manager]
+
+  critical_policy:
+    - level: 1
+      delay_minutes: 0
+      contacts: [on_call_primary, on_call_secondary]
+
+    - level: 2
+      delay_minutes: 5
+      contacts: [manager, director]
+
+    - level: 3
+      delay_minutes: 10
+      contacts: [vp_technology]
+
+  business_hours_policy:
+    - level: 1
+      delay_minutes: 0
+      contacts: [team_slack_channel]
+
+    - level: 2
+      delay_minutes: 30
+      contacts: [team_email_list]
+
+# Alert Suppression Rules
+suppression:
+  # Suppress duplicate alerts
+  duplicate_window_minutes: 15
+
+  # Suppress alerts during maintenance
+  maintenance_mode: true
+
+  # Suppress alerts for known issues
+  known_issues:
+    - issue_id: ISSUE-123
+      suppress_alerts: [feed_degraded]
+      until: "2025-11-30T00:00:00Z"
+
+  # Suppress low priority alerts during critical incidents
+  incident_mode:
+    enabled: true
+    suppress_priorities: [low, medium]
+
+  # Correlated alert suppression
+  correlation_rules:
+    - name: database_cascade
+      primary_alert: database_connection_lost
+      suppress_alerts: [performance_degradation, execution_degraded]
+      duration_minutes: 30
+
+    - name: network_cascade
+      primary_alert: network_failure
+      suppress_alerts: [feed_degraded, data_feed_failure]
+      duration_minutes: 15
+
+# On-call Schedule
+oncall:
+  schedule:
+    - name: primary
+      rotation: weekly
+      members:
+        - name: Alice
+          contact:
+            email: alice@example.com
+            phone: "+1234567890"
+            slack: "@alice"
+
+        - name: Bob
+          contact:
+            email: bob@example.com
+            phone: "+1234567891"
+            slack: "@bob"
+
+    - name: secondary
+      rotation: weekly
+      members:
+        - name: Charlie
+          contact:
+            email: charlie@example.com
+            phone: "+1234567892"
+            slack: "@charlie"
+
+        - name: Diana
+          contact:
+            email: diana@example.com
+            phone: "+1234567893"
+            slack: "@diana"
+
+# Alert Templates
+templates:
+  email:
+    subject: "[{severity}] {alert_name}: {summary}"
+    body: |
+      Alert: {alert_name}
+      Severity: {severity}
+      Time: {timestamp}
+
+      Description: {description}
+
+      Condition: {condition}
+      Current Value: {current_value}
+      Threshold: {threshold}
+
+      Details:
+      {details}
+
+      Actions:
+      {recommended_actions}
+
+      Acknowledgement Link: {ack_link}
+
+  slack:
+    format: |
+      :rotating_light: *{severity}* Alert: {alert_name}
+      {description}
+
+      *Current Value:* {current_value}
+      *Threshold:* {threshold}
+      *Time:* {timestamp}
+
+      <{ack_link}|Acknowledge> | <{details_link}|View Details>
+
+  sms:
+    format: "[{severity}] {alert_name}: {summary}. Ack: {ack_link}"
