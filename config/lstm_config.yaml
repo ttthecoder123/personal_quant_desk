@@ -1,0 +1,31 @@
+# LSTM Model Configuration
+
+model:
+  name: "attention_lstm"
+  seq_length: 60  # 60 days of history
+  hidden_size: 256
+  num_layers: 3
+  dropout: 0.2
+
+training:
+  # Multi-horizon prediction
+  horizons: [1, 5, 20]  # Predict 1-day, 5-day, 20-day returns
+
+  # Training parameters
+  epochs: 100
+  batch_size: 128
+  learning_rate: 0.001
+  weight_decay: 0.0001
+
+  # Early stopping
+  early_stopping_patience: 15
+
+# Tracking
+tracking:
+  wandb: true
+  mlflow: false
+
+# Export
+export:
+  format: "onnx"
+  quantization: false  # Can enable INT8 quantization for faster inference

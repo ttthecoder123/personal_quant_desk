@@ -1,0 +1,68 @@
+# Remote GPU Server Configuration
+# This file contains connection details for your remote training server
+
+remote_gpu:
+  # SSH Connection Details
+  host: "your-gpu-server.com"  # Replace with your RunPod/Vast.ai IP
+  user: "root"                  # Usually 'root' for cloud providers
+  port: 22                      # SSH port
+  remote_path: "/workspace/personal_quant_desk"  # Remote working directory
+
+  # Auto-shutdown (cost optimization)
+  auto_shutdown: true  # Shutdown after training to save costs
+
+  # GPU specifications (for reference)
+  gpu_type: "RTX 4090"  # or "A100", "V100", etc.
+  gpu_count: 1
+  vram_gb: 24
+
+# Training Configuration
+training:
+  # Sync settings
+  sync_data: false  # Don't sync large historical data (download via API on remote)
+
+  # Model training settings
+  models:
+    lstm:
+      config: "configs/lstm_config.yaml"
+      expected_time_minutes: 30  # On RTX 4090
+      output_format: "onnx"  # For M1 compatibility
+
+    transformer:
+      config: "configs/transformer_config.yaml"
+      expected_time_minutes: 60
+      output_format: "onnx"
+
+    rl_execution:
+      config: "configs/rl_execution_config.yaml"
+      expected_time_minutes: 120
+      output_format: "onnx"
+
+# Cost Tracking
+cost_tracking:
+  enabled: true
+  provider: "vast.ai"  # or "runpod", "aws", etc.
+  hourly_rate: 0.50  # USD per hour
+  alert_threshold: 5.00  # Alert if training costs exceed this
+
+# Monitoring
+monitoring:
+  wandb:
+    enabled: true
+    project: "quant-desk"
+    entity: "your-username"  # Replace with your W&B username
+
+  mlflow:
+    enabled: true
+    tracking_uri: "http://localhost:5000"  # Local MLflow server
+
+# Experiment Management
+experiments:
+  # Where to store experiment results
+  results_dir: "experiments/results"
+
+  # Hyperparameter optimization
+  hyperopt:
+    max_trials: 100
+    parallel_trials: 4  # Use 4 GPUs if available
+    optimization_metric: "sharpe_ratio"
